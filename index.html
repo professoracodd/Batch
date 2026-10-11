@@ -134,6 +134,15 @@ main{padding:calc(56px + env(safe-area-inset-top,0px) + 4px) 0 calc(96px + env(s
 .seg button.on{background:var(--sc-high);color:#fff;box-shadow:inset 0 0 0 1px var(--lav-line)}
 .seg i{width:6px;height:6px;border-radius:50%;background:var(--lav-ink);display:inline-block}
 .hero-pf{align-self:flex-start;margin-top:10px}
+.price-btn{display:inline-flex;align-items:center;gap:6px;border-radius:12px;padding:0 4px;margin-left:-4px}
+.price-btn:active{opacity:.7}
+.pe-ic{color:var(--on-sv);opacity:.7}
+.price-btn[hidden],.price-edit[hidden]{display:none}
+.price-edit{display:inline-flex;align-items:center;gap:6px;position:relative}
+.price-edit i{position:absolute;left:12px;font-style:normal;font-size:24px;font-weight:700;color:var(--on-sv);pointer-events:none}
+.price-edit input{width:124px;font-size:26px;font-weight:700;padding:6px 10px 6px 30px;border-color:var(--lav-line);background:var(--sc-lowest)}
+.price-edit:not([hidden])~.title{display:none}
+.pe-done{padding:8px 12px;border-radius:10px;background:#fff;color:#000;font-weight:600;font-size:14px}
 .seg.full{width:100%}
 .seg.full button{flex:1;justify-content:center}
 .pay{color:var(--good)}
@@ -605,7 +614,7 @@ function defaults(){
       items:[{name:'Boxes',price:28,count:50,perItem:0,perOrder:1},{name:'Wax paper',price:0.07,count:200,perItem:0,perOrder:1},{name:'Labels - 300 pack',price:5.54,count:300,perItem:0,perOrder:1},{name:'Labels - 360 pack',price:8.98,count:360,perItem:0,perOrder:1}],
       label:{inkPrice:30,pages:400,perSheet:null,perItem:0,perOrder:2}
     },
-    recipes:Object.keys(PRESETS).map(fromPreset)
+    recipes:Object.keys(PRESETS).map(fromPreset),presetsAdded:1
   };
 }
 function isNew(d){return d&&Array.isArray(d.recipes)&&d.packaging&&Array.isArray(d.packaging.items)&&d.packaging.label&&d.recipes.every(r=>Array.isArray(r.sections))&&!d.recipes.some(r=>'dozenPrice' in r||'planDozens' in r);}
@@ -747,10 +756,10 @@ function profitHTML(){
   return `
   <section class="card hero" aria-label="Price">
     <div class="hero-top">
-      <div class="hero-l"><span class="caps muted" data-o="h-lab"></span><div class="metric-row"><span class="metric num" data-o="h-price"></span><span class="title muted">each</span></div><span class="glow hero-pf" data-o="h-pf"></span></div>
+      <div class="hero-l"><span class="caps muted" data-o="h-lab"></span><div class="metric-row"><button class="price-btn" data-a="editPrice" aria-label="Type an exact price"><span class="metric num" data-o="h-price"></span><span class="ms sm pe-ic" aria-hidden="true">edit</span></button><span class="price-edit" hidden><i>$</i><input id="priceIn" type="number" inputmode="decimal" step="0.01" min="0" aria-label="Exact price"><button class="pe-done" data-a="priceDone">Done</button></span><span class="title muted">each</span></div><span class="glow hero-pf" data-o="h-pf"></span></div>
       <div class="stepper"><button data-a="step:-1" aria-label="Lower price">${ms('remove')}</button><button data-a="step:1" aria-label="Raise price">${ms('add')}</button></div>
     </div>
-    <input type="range" class="range" data-s="price" min="0" max="1000" step="1" aria-label="Price each">
+    <input type="range" class="range" data-s="price" min="0" max="115" step="1" aria-label="Price each">
     <div class="qty-box" data-tour="qty">
       <div class="qty-top"><span class="qty-l"><span class="caps muted">Order</span><span class="foot muted" data-o="q-tot"></span></span>
         <div class="stepper sm"><button data-a="qty:-1" aria-label="One fewer">${ms('remove')}</button><span class="qty-v num" data-o="q-v"></span><button data-a="qty:1" aria-label="One more">${ms('add')}</button></div></div>
@@ -863,9 +872,13 @@ function checklistHTML(r,c){
 
 /* ---------- live values ---------- */
 const priceStep=p=>p<5?0.25:p<20?0.5:1;
-const PMAX=250,PEXP=2.6;
-const sliderToPrice=v=>{const raw=PMAX*Math.pow(Math.max(0,Math.min(1000,v))/1000,PEXP);const snap=raw<10?0.05:raw<50?0.25:1;return Math.min(PMAX,Math.round(raw/snap)*snap);};
-const priceToSlider=p=>Math.round(1000*Math.pow(Math.min(PMAX,Math.max(0,p))/PMAX,1/PEXP));
+const PMAX=250;
+const PSTOPS=(()=>{const a=[];for(let p=0;p<=25;p+=0.5)a.push(p);for(let p=26;p<=50;p++)a.push(p);for(let p=55;p<=PMAX;p+=5)a.push(p);return a;})();
+const sliderToPrice=v=>PSTOPS[Math.max(0,Math.min(PSTOPS.length-1,Math.round(v)))];
+const priceToSlider=p=>{let bi=0,bd=Infinity;PSTOPS.forEach((x,i)=>{const d=Math.abs(x-p);if(d<bd){bd=d;bi=i;}});return bi;};
+function editPrice(on){const btn=$('.price-btn'),box=$('.price-edit'),inp=$('#priceIn');if(!btn||!box)return;
+  if(on){btn.hidden=true;box.hidden=false;inp.value=num(R().price).toFixed(2);inp.focus();inp.select();}
+  else{const v=parseFloat(inp.value);if(isFinite(v)&&v>=0){R().price=Math.round(v*100)/100;save();}box.hidden=true;btn.hidden=false;update();}}
 function update(){
   const o={};const r=R();
   S.recipes.forEach((x,i)=>o['pill-'+i]=x.name||'Untitled');
@@ -945,9 +958,12 @@ document.addEventListener('input',e=>{
   else if(t.dataset.s==='qty'){setQty(+t.value);}
   else if(t.dataset.s==='min'){R().minutes=+t.value;save();update();}
 });
+document.addEventListener('focusout',e=>{if(e.target&&e.target.id==='priceIn'&&!(e.relatedTarget&&e.relatedTarget.dataset&&e.relatedTarget.dataset.a==='priceDone'))editPrice(false);});
+document.addEventListener('keydown',e=>{if(e.target&&e.target.id==='priceIn'&&e.key==='Enter'){e.preventDefault();e.target.blur();}});
 document.addEventListener('change',e=>{
   const t=e.target;
   if(t.tagName==='SELECT'&&t.dataset.b){SFX.tap();setBound(t);return;}
+  if(t.id==='priceIn'){return;}
   if(t.id==='soundOn'){S.sound=t.checked;save();if(t.checked)SFX.toggle(true);return;}
   if(t.id==='incCosts'){SFX.toggle(t.checked);S.incCosts=t.checked;save();}
 });
@@ -971,8 +987,8 @@ const TOUR=[
   {tab:'profit',sel:'.brand',t:'Welcome to Batch+',d:'Price any recipe: what it costs to make, what to charge, and what you earn. Sit back and this tour plays itself. Tap pause anytime.',dur:7000},
   {tab:'profit',sel:'.pills',t:'Your recipes',d:'Tap a recipe to switch to it. The + starts a new one, blank or from a preset like pie, soap or tacos.',dur:7500,
     demo:async tok=>{if(S.recipes.length<2)return;await tapClick('.pill:nth-child(2)',tok);await sleep(1500,tok);await tapClick('.pill:nth-child(1)',tok);}},
-  {tab:'profit',sel:'.hero .hero-top',t:'Set your price',d:'Drag the slider or tap − and + to set the price for one. The green box shows your profit on the order.',dur:11000,
-    demo:async tok=>{const v=+q('[data-s=price]').value;await drag('[data-s=price]',Math.min(1000,v+150),tok);await sleep(900,tok);await drag('[data-s=price]',v,tok);await sleep(400,tok);await tapClick('[data-a="step:1"]',tok);}},
+  {tab:'profit',sel:'.hero .hero-top',t:'Set your price',d:'Drag the slider or tap − and + to change the price by 50¢. Tap the price to type an exact amount. The green box shows your profit on the order.',dur:11000,
+    demo:async tok=>{const v=+q('[data-s=price]').value;await drag('[data-s=price]',Math.min(115,v+14),tok);await sleep(900,tok);await drag('[data-s=price]',v,tok);await sleep(400,tok);await tapClick('[data-a="step:1"]',tok);}},
   {tab:'profit',sel:'[data-tour=qty]',t:'How many?',d:'Set the order size with − and +, or tap a quick amount. Everything multiplies from the price of one.',dur:9500,
     demo:async tok=>{await tapClick('[data-a="qset:6"]',tok);await sleep(900,tok);await tapClick('[data-a="qset:24"]',tok);await sleep(900,tok);await tapClick('[data-a="qty:1"]',tok);await sleep(300,tok);await tap(tok);q('[data-a="qty:1"]').click();}},
   {tab:'profit',sel:'.time-card',t:'Time per batch',d:'Slide to match how long a batch takes you. Your hourly pay updates as you go.',dur:9000,
@@ -1035,13 +1051,15 @@ document.addEventListener('click',e=>{
   const raw=b.dataset.a,ix=raw.indexOf(':'),a=ix<0?raw:raw.slice(0,ix),rest=ix<0?'':raw.slice(ix+1),[x,y]=rest.split(':');
   const r=R();
   ({sel:SFX.tap,tab:SFX.nav,qset:SFX.tap,exp:()=>(OPEN===rest?SFX.close:SFX.open)(),chk:()=>(CHECK.has(rest)?SFX.uncheck:SFX.check)(),chkReset:SFX.down,
-    step:()=>(+x>0?SFX.up:SFX.down)(),qty:()=>(+x>0?SFX.up:SFX.down)(),addRecipe:SFX.open,preset:SFX.add,dupRecipe:SFX.add,addItem:SFX.add,addSec:SFX.add,addPk:SFX.add,delItem:SFX.del,delPk:SFX.del,
+    step:()=>(+x>0?SFX.up:SFX.down)(),qty:()=>(+x>0?SFX.up:SFX.down)(),editPrice:SFX.tap,priceDone:SFX.tap,addRecipe:SFX.open,preset:SFX.add,dupRecipe:SFX.add,addItem:SFX.add,addSec:SFX.add,addPk:SFX.add,delItem:SFX.del,delPk:SFX.del,
     sheet:SFX.open,closeSheet:SFX.close,imgOne:SFX.chime,pdfOne:SFX.chime,pdfAll:SFX.chime,xlsx:SFX.chime,import:SFX.tap,
     tour:SFX.nav,tourNext:SFX.nav,tourPrev:SFX.nav,tourEnd:SFX.close,tourAuto:()=>SFX.toggle(!AUTO)}[a]||(()=>{}))();
   switch(a){
     case 'sel':S.active=+x;OPEN=null;break;
     case 'tab':S.tab=x;OPEN=null;window.scrollTo(0,0);break;
-    case 'step':{const p=num(r.price),st=priceStep(+x>0?p:Math.max(0,p-0.01));r.price=Math.min(PMAX,Math.max(0,Math.round((p+(+x)*st)*100)/100));save();update();return;}
+    case 'step':{const p=num(r.price);const n=+x>0?Math.floor(p/0.5+1e-9)*0.5+0.5:Math.ceil(p/0.5-1e-9)*0.5-0.5;r.price=Math.max(0,Math.round(n*100)/100);save();update();return;}
+    case 'editPrice':editPrice(true);return;
+    case 'priceDone':editPrice(false);return;
     case 'qty':setQty(qtyOf(r)+(+x));return;
     case 'qset':setQty(+x);return;
     case 'exp':OPEN=OPEN===rest?null:rest;break;
@@ -1288,11 +1306,15 @@ $('#fileIn').addEventListener('change',async e=>{
   }catch(err){toast('Couldn\'t read that file.');}
 });
 
+let ADDED=0;
+if(!S.presetsAdded){const have=new Set(S.recipes.map(x=>String(x.name||'').trim().toLowerCase()));
+  Object.keys(PRESETS).forEach(k=>{if(!have.has(PRESETS[k].label.toLowerCase())){S.recipes.push(fromPreset(k));ADDED++;}});S.presetsAdded=1;}
 if(!S.tab||!TABS[S.tab])S.tab='profit';
 if(S.incCosts===undefined)S.incCosts=true;
 save();
 render();
 if(BROUGHT)setTimeout(()=>toast('Your cookie recipes were brought over from the cookie app.',4500),900);
+else if(ADDED)setTimeout(()=>toast(`Added ${ADDED} preset${ADDED===1?'':'s'}. Scroll your recipe row to see them.`,4500),900);
 let storeOk=true;try{localStorage.setItem('__batch_t','1');storeOk=localStorage.getItem('__batch_t')==='1';localStorage.removeItem('__batch_t');}catch(e){storeOk=false;}
 const tourSeen=()=>{try{return localStorage.getItem(TOURKEY)==='1';}catch(e){return false;}};
 if(!tourSeen())setTimeout(()=>{if(TI<0&&!tourSeen())tourStart();},BROUGHT?5600:800);
