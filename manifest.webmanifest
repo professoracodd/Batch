@@ -1,6 +1,6 @@
 {
-  "name": "Batch – Recipe Calculator",
-  "short_name": "Batch",
+  "name": "Batch+ – Recipe Calculator",
+  "short_name": "Batch+",
   "description": "Recipe costs, pricing and profit for anything you make.",
   "scope": "./",
   "display": "standalone",

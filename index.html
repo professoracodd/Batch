@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#000000">
-<title>Batch · Recipe Calculator</title>
+<title>Batch+ · Recipe Calculator</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Batch">
+<meta name="apple-mobile-web-app-title" content="Batch+">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -432,7 +432,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none}
 <body>
 <header class="top">
   <div class="top-in">
-    <div class="brand"><span class="logo"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21h14"/><path d="M7 21V9"/><path d="M5.5 5.5c0-1.7 1.3-3 3-3h7.5c2.2 0 4 1.8 4 4v.5c0 1.1-.9 2-2 2H7"/><path d="M15 9v2.5"/><path d="M10.5 13h9l-1.3 5.2a2 2 0 0 1-1.9 1.5h-2.6a2 2 0 0 1-1.9-1.5z"/></svg></span><span class="brand-name">Batch</span></div>
+    <div class="brand"><span class="logo"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21h14"/><path d="M7 21V9"/><path d="M5.5 5.5c0-1.7 1.3-3 3-3h7.5c2.2 0 4 1.8 4 4v.5c0 1.1-.9 2-2 2H7"/><path d="M15 9v2.5"/><path d="M10.5 13h9l-1.3 5.2a2 2 0 0 1-1.9 1.5h-2.6a2 2 0 0 1-1.9-1.5z"/></svg></span><span class="brand-name">Batch+</span></div>
     <div class="top-title"><span id="title">Calculator</span></div>
     <div class="top-act">
       <button class="icon-btn" data-a="tour" data-tour="help" aria-label="Take the tour"><span class="ms" aria-hidden="true">help</span></button>
@@ -488,6 +488,13 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none}
   <div class="tour-finger" id="tourFinger" aria-hidden="true"></div>
 </div>
 <div id="printArea"></div>
+<div class="sheet" id="psheet" role="dialog" aria-modal="true" aria-label="New recipe" aria-hidden="true">
+  <div class="grab"></div>
+  <h3>New recipe</h3>
+  <div class="caps s-cap">Start from</div>
+  <div class="s-group" id="presetList"></div>
+  <button class="cancel" data-a="closeSheet">Cancel</button>
+</div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <input type="file" id="fileIn" accept=".xlsx,.json" hidden>
 
@@ -513,7 +520,7 @@ const DENS=[ // ounces per cup, standard kitchen weights
   [/brown sugar/,7.5],[/powdered|confectioner|icing sugar/,4],[/sugar/,7],
   [/flour/,4.25],[/cocoa/,3],[/chocolate|chip/,6],[/butter|margarine/,8],[/shortening|lard/,6.75],
   [/baking soda/,9.6],[/baking powder/,7.68],[/salt/,9.6],[/meringue/,4.8],[/corn ?starch/,4],
-  [/rice/,7],[/cheese/,4],[/oat/,3.2],[/pecan|walnut|almond|nut/,4],[/honey|molasses|syrup/,12],[/sprinkle|nonpareil/,6.4]];
+  [/cinnamon|nutmeg|cumin|chili powder|paprika|oregano|garlic powder|onion powder|spice/,4.4],[/rice/,7],[/cheese/,4],[/oat/,3.2],[/pecan|walnut|almond|nut/,4],[/honey|molasses|syrup/,12],[/sprinkle|nonpareil/,6.4]];
 const VOLC={cup:1,tbsp:1/16,tsp:1/48,pinch:1/768,floz:1/8,ml:1/236.6,l:1000/236.6},WTOZ={oz:1,lb:16,g:1/28.3495,kg:35.274};
 const UFR={'½':' 1/2','¼':' 1/4','¾':' 3/4','⅓':' 1/3','⅔':' 2/3','⅛':' 1/8','⅜':' 3/8','⅝':' 5/8','⅞':' 7/8'};
 function parseQty(str){
@@ -566,6 +573,31 @@ let uid=Date.now();
 const id=()=>'r'+(uid++).toString(36);
 const I=(name,price,size,unit,mq,mu,amount)=>({name,price,size,unit,mq,mu,amount});
 const newItem=()=>I('',null,null,'oz','','cup',null);
+// P(): an ingredient whose "uses from package" is worked out from its amount and unit
+function P(name,price,size,unit,mq,mu){const it=I(name,price,size,unit,mq,mu,null);const q=parseQty(mq);if(q!=null){const r=convertQty(q,mu,name,unit);if(r.v!=null)it.amount=r.v;}return it;}
+const EST='Prices are estimates of typical store prices. Tap any ingredient to use what you pay.';
+const PRESETS={
+  cookies:{label:'Chocolate Chip Cookies',icon:'cookie',tone:'tn-pink',sub:'12 cookies · your prices',make:()=>({name:'Chocolate Chip Cookies',yield:12,itemName:'cookies',price:2,minutes:40,qty:12,
+    notes:'Cream butter and sugars. Beat in eggs and vanilla. Mix in flour, baking soda and salt, then fold in chips. Bake at 375°F for 9–11 minutes.',
+    sections:[{name:'Dough',items:[P('Butter',5.96,8,'stick','1','cup'),P('Granulated sugar',7.38,10,'lb','3/4','cup'),P('Brown sugar, packed',1.99,32,'oz','3/4','cup'),P('Eggs',8.05,8,'dozen','2','each'),P('Vanilla extract',10.88,16,'fl oz','1','tsp'),P('Flour',2.49,5,'lb','2 1/4','cup'),P('Baking soda',10.2,13.5,'lb','1','tsp'),P('Salt',1.89,26,'oz','1','tsp')]},
+      {name:'Mix-ins',items:[P('Chocolate chips',16.99,72,'oz','2','cup')]}]})},
+  pie:{label:'Apple Pie',icon:'bakery_dining',tone:'tn-peach',sub:'1 pie · estimated prices',make:()=>({name:'Apple Pie',yield:1,itemName:'pies',price:28,minutes:120,qty:1,
+    notes:EST+'\nToss apples with sugars, flour, cinnamon and lemon. Fill the bottom crust, top and vent, brush with egg. Bake at 425°F for 15 minutes, then 350°F for 40–45 minutes until bubbling.',
+    sections:[{name:'Crust',items:[P('Flour',2.49,5,'lb','2 1/2','cup'),P('Butter',5.96,8,'stick','1','cup'),P('Granulated sugar',7.38,10,'lb','1','tbsp'),P('Salt',1.89,26,'oz','1','tsp')]},
+      {name:'Filling',items:[P('Apples',5.49,3,'lb','3','lb'),P('Granulated sugar',7.38,10,'lb','3/4','cup'),P('Brown sugar, packed',1.99,32,'oz','1/4','cup'),P('Flour',2.49,5,'lb','2','tbsp'),P('Ground cinnamon',3.49,2.37,'oz','1','tsp'),P('Lemon juice',3.29,15,'fl oz','1','tbsp')]},
+      {name:'Finish',items:[P('Egg (for wash)',8.05,8,'dozen','1','each')]}]})},
+  soap:{label:'Cold Process Soap',icon:'soap',tone:'tn-sky',sub:'12 bars · estimated prices',make:()=>({name:'Cold Process Soap',yield:12,itemName:'bars',price:8,minutes:75,qty:6,
+    notes:EST+'\nExample recipe at about 5% superfat (32 oz of oils). Always check your own recipe with a lye calculator, and wear gloves and goggles when handling lye. Cure bars 4–6 weeks before selling.',
+    sections:[{name:'Oils',items:[P('Olive oil',32,1,'gallon','13','oz'),P('Coconut oil',21.99,7,'lb','9.6','oz'),P('Shea butter',17.99,2,'lb','6.4','oz'),P('Castor oil',14.99,32,'fl oz','3.2','oz')]},
+      {name:'Lye solution',items:[P('Sodium hydroxide (lye)',15.99,2,'lb','4.5','oz'),P('Distilled water',1.49,1,'gallon','10.5','oz')]},
+      {name:'Scent',items:[P('Fragrance oil',11.99,4,'fl oz','2','oz')]}]})},
+  tacos:{label:'Street Tacos',icon:'tapas',tone:'tn-mint',sub:'12 tacos · estimated prices',make:()=>({name:'Street Tacos',yield:12,itemName:'tacos',price:3.5,minutes:45,qty:12,
+    notes:EST+'\nBrown the beef with diced onion and seasoning. Warm the tortillas, fill, top, and serve with lime wedges.',
+    sections:[{name:'Filling',items:[P('Ground beef',5.99,1,'lb','1','lb'),P('Taco seasoning packet',1.29,1,'each','1','each'),P('Onion',3.49,6,'each','1','each')]},
+      {name:'Shells',items:[P('Corn tortillas',3.49,30,'each','12','each')]},
+      {name:'Toppings',items:[P('Shredded cheese',3.49,8,'oz','1','cup'),P('Lettuce',1.99,1,'each','1/2','each'),P('Tomatoes',2.99,4,'each','2','each'),P('Salsa',3.49,16,'fl oz','1/2','cup'),P('Sour cream',2.49,16,'oz','1/2','cup'),P('Cilantro',0.99,1,'each','1/2','each'),P('Limes',2.99,6,'each','2','each')]}]})}
+};
+const fromPreset=k=>({id:id(),...PRESETS[k].make()});
 function defaults(){
   return {
     active:0,tab:'profit',incCosts:true,
@@ -573,16 +605,7 @@ function defaults(){
       items:[{name:'Boxes',price:28,count:50,perItem:0,perOrder:1},{name:'Wax paper',price:0.07,count:200,perItem:0,perOrder:1},{name:'Labels - 300 pack',price:5.54,count:300,perItem:0,perOrder:1},{name:'Labels - 360 pack',price:8.98,count:360,perItem:0,perOrder:1}],
       label:{inkPrice:30,pages:400,perSheet:null,perItem:0,perOrder:2}
     },
-    recipes:[
-      {id:id(),name:'Chocolate Chip Cookies',yield:12,itemName:'cookies',price:2,minutes:40,qty:12,notes:'',
-       sections:[
-        {name:'Dough',items:[I('Butter',5.96,8,'stick','1','cup',2),I('Granulated sugar',7.38,10,'lb','3/4','cup',5.25),I('Brown sugar',1.99,32,'oz','3/4','cup',5.625),I('Eggs',8.05,8,'dozen','2','each',2),I('Vanilla extract',10.88,16,'fl oz','1','tsp',0.167),I('Flour',2.49,5,'lb','2 1/4','cup',9.563),I('Baking soda',10.2,13.5,'lb','1','tsp',0.2),I('Salt',1.89,26,'oz','1','tsp',0.2)]},
-        {name:'Mix-ins',items:[I('Chocolate chips',16.99,72,'oz','2','cup',12)]}]},
-      {id:id(),name:'Decorated Sugar Cookies',yield:15,itemName:'cookies',price:3,minutes:90,qty:12,notes:'',
-       sections:[
-        {name:'Dough',items:[I('Butter',2.99,4,'stick','1','cup',2),I('Granulated sugar',7.38,10,'lb','1','cup',7),I('Flour',2.49,5,'lb','3','cup',12.75),I('Eggs',8.05,8,'dozen','1','each',1),I('Vanilla extract',10.88,16,'fl oz','1','tsp',0.167),I('Almond extract',5.16,2,'fl oz','1/2','tsp',0.083),I('Baking powder',1.99,8.1,'oz','2','tsp',0.32)]},
-        {name:'Royal Icing & Color',items:[I('Powdered sugar',1.99,2,'lb','4','cup',16),I('Meringue powder',8.48,4,'oz','3','tbsp',0.9),I('Gel food coloring',null,null,'oz','','tsp',null)]}]}
-    ]
+    recipes:Object.keys(PRESETS).map(fromPreset)
   };
 }
 function isNew(d){return d&&Array.isArray(d.recipes)&&d.packaging&&Array.isArray(d.packaging.items)&&d.packaging.label&&d.recipes.every(r=>Array.isArray(r.sections))&&!d.recipes.some(r=>'dozenPrice' in r||'planDozens' in r);}
@@ -908,7 +931,10 @@ function setBound(el){
   save();update();
 }
 const newRecipe=()=>({id:id(),name:'New Recipe',yield:12,itemName:'servings',price:2,minutes:45,qty:1,notes:'',sections:[{name:'Ingredients',items:[newItem()]}]});
-function openSheet(on){$('#sheet').classList.toggle('on',on);$('#scrim').classList.toggle('on',on);$('#sheet').setAttribute('aria-hidden',on?'false':'true');}
+function openSheet(on,which){['sheet','psheet'].forEach(x=>{const el=document.getElementById(x);if(!el)return;const show=!!on&&(which||'sheet')===x;el.classList.toggle('on',show);el.setAttribute('aria-hidden',show?'false':'true');});$('#scrim').classList.toggle('on',!!on);}
+function renderPresets(){const el=$('#presetList');if(!el)return;
+  el.innerHTML=`<button class="s-item" data-a="preset:blank"><span class="ic tn-lav"><span class="ms" aria-hidden="true">add</span></span><span class="txt">Blank recipe<small>Start from scratch</small></span></button>`+
+  Object.entries(PRESETS).map(([k,v])=>`<button class="s-item" data-a="preset:${k}"><span class="ic ${v.tone}"><span class="ms" aria-hidden="true">${v.icon}</span></span><span class="txt">${esc(v.label)}<small>${esc(v.sub)}</small></span></button>`).join('');}
 function setQty(n){R().qty=Math.max(1,Math.round(n));save();update();}
 
 document.addEventListener('input',e=>{
@@ -942,8 +968,8 @@ async function typeInto(sel,text,tok){await fingerTo(sel,tok);await tap(tok);con
 
 async function pickSelect(sel,value,tok){await fingerTo(sel,tok);await tap(tok);const el=q(sel);if(!el)return;el.classList.add('demo-focus');await sleep(500,tok);el.value=value;SFX.tap();setBound(el);await sleep(700,tok);el.classList.remove('demo-focus');}
 const TOUR=[
-  {tab:'profit',sel:'.brand',t:'Welcome to Batch',d:'Price any recipe: what it costs to make, what to charge, and what you earn. Sit back and this tour plays itself. Tap pause anytime.',dur:7000},
-  {tab:'profit',sel:'.pills',t:'Your recipes',d:'Tap a recipe to switch to it. The + adds a new one.',dur:7500,
+  {tab:'profit',sel:'.brand',t:'Welcome to Batch+',d:'Price any recipe: what it costs to make, what to charge, and what you earn. Sit back and this tour plays itself. Tap pause anytime.',dur:7000},
+  {tab:'profit',sel:'.pills',t:'Your recipes',d:'Tap a recipe to switch to it. The + starts a new one, blank or from a preset like pie, soap or tacos.',dur:7500,
     demo:async tok=>{if(S.recipes.length<2)return;await tapClick('.pill:nth-child(2)',tok);await sleep(1500,tok);await tapClick('.pill:nth-child(1)',tok);}},
   {tab:'profit',sel:'.hero .hero-top',t:'Set your price',d:'Drag the slider or tap − and + to set the price for one. The green box shows your profit on the order.',dur:11000,
     demo:async tok=>{const v=+q('[data-s=price]').value;await drag('[data-s=price]',Math.min(1000,v+150),tok);await sleep(900,tok);await drag('[data-s=price]',v,tok);await sleep(400,tok);await tapClick('[data-a="step:1"]',tok);}},
@@ -1009,7 +1035,7 @@ document.addEventListener('click',e=>{
   const raw=b.dataset.a,ix=raw.indexOf(':'),a=ix<0?raw:raw.slice(0,ix),rest=ix<0?'':raw.slice(ix+1),[x,y]=rest.split(':');
   const r=R();
   ({sel:SFX.tap,tab:SFX.nav,qset:SFX.tap,exp:()=>(OPEN===rest?SFX.close:SFX.open)(),chk:()=>(CHECK.has(rest)?SFX.uncheck:SFX.check)(),chkReset:SFX.down,
-    step:()=>(+x>0?SFX.up:SFX.down)(),qty:()=>(+x>0?SFX.up:SFX.down)(),addRecipe:SFX.add,dupRecipe:SFX.add,addItem:SFX.add,addSec:SFX.add,addPk:SFX.add,delItem:SFX.del,delPk:SFX.del,
+    step:()=>(+x>0?SFX.up:SFX.down)(),qty:()=>(+x>0?SFX.up:SFX.down)(),addRecipe:SFX.open,preset:SFX.add,dupRecipe:SFX.add,addItem:SFX.add,addSec:SFX.add,addPk:SFX.add,delItem:SFX.del,delPk:SFX.del,
     sheet:SFX.open,closeSheet:SFX.close,imgOne:SFX.chime,pdfOne:SFX.chime,pdfAll:SFX.chime,xlsx:SFX.chime,import:SFX.tap,
     tour:SFX.nav,tourNext:SFX.nav,tourPrev:SFX.nav,tourEnd:SFX.close,tourAuto:()=>SFX.toggle(!AUTO)}[a]||(()=>{}))();
   switch(a){
@@ -1021,7 +1047,9 @@ document.addEventListener('click',e=>{
     case 'exp':OPEN=OPEN===rest?null:rest;break;
     case 'chk':CHECK.has(rest)?CHECK.delete(rest):CHECK.add(rest);update();return;
     case 'chkReset':CHECK.clear();update();return;
-    case 'addRecipe':S.recipes.push(newRecipe());S.active=S.recipes.length-1;S.tab='recipe';OPEN=null;save();render();window.scrollTo(0,0);{const t=document.querySelector('[data-b="r:name"]');if(t){t.focus();t.select();}}return;
+    case 'addRecipe':renderPresets();openSheet(true,'psheet');return;
+    case 'preset':{openSheet(false);if(x==='blank'){S.recipes.push(newRecipe());S.active=S.recipes.length-1;S.tab='recipe';OPEN=null;save();render();window.scrollTo(0,0);const t=document.querySelector('[data-b="r:name"]');if(t){t.focus();t.select();}return;}
+      if(!PRESETS[x])return;S.recipes.push(fromPreset(x));S.active=S.recipes.length-1;S.tab='profit';OPEN=null;window.scrollTo(0,0);toast(`${PRESETS[x].label} added`);break;}
     case 'dupRecipe':{const c=JSON.parse(JSON.stringify(r));c.id=id();c.name=(r.name||'Recipe')+' (copy)';S.recipes.splice(S.active+1,0,c);S.active++;OPEN=null;toast('Recipe duplicated');break;}
     case 'delRecipe':if(!confirm(`Delete "${r.name||'this recipe'}"? This can't be undone.`))return;SFX.del();S.recipes.splice(S.active,1);if(!S.recipes.length)S.recipes.push(newRecipe());S.active=Math.max(0,S.active-1);OPEN=null;break;
     case 'addItem':r.sections[+x].items.push(newItem());OPEN=`i:${x}:${r.sections[+x].items.length-1}`;save();render();document.querySelector(`[data-b="i:${x}:${r.sections[+x].items.length-1}:name"]`)?.focus();return;
@@ -1067,7 +1095,7 @@ function drawCard(r,inc){
     const fit=(txt,font,maxW)=>{ctx.font=font;let t=String(txt);if(ctx.measureText(t).width<=maxW)return t;while(t.length>1&&ctx.measureText(t+'…').width>maxW)t=t.slice(0,-1);return t+'…';};
     const rr=(x,yy,w,h,rad,stroke,fill)=>{if(!go)return;ctx.beginPath();if(ctx.roundRect)ctx.roundRect(x,yy,w,h,rad);else ctx.rect(x,yy,w,h);if(fill){ctx.fillStyle=fill;ctx.fill();}if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=2;ctx.stroke();}};
     if(go){ctx.fillStyle='#000';ctx.fillRect(0,0,W,cv.height);const g=ctx.createLinearGradient(0,0,W,0);PAS.forEach((p,i)=>g.addColorStop(i/(PAS.length-1),p));ctx.fillStyle=g;ctx.fillRect(0,0,W,8);}
-    y=P+28;T('BATCH',P,y,`700 26px ${F}`,'#c4b5fd');T(new Date().toLocaleDateString(),W-P,y,`500 26px ${F}`,'#71717a','right');
+    y=P+28;T('BATCH+',P,y,`700 26px ${F}`,'#c4b5fd');T(new Date().toLocaleDateString(),W-P,y,`500 26px ${F}`,'#71717a','right');
     y+=36;wrap(r.name||'Untitled recipe',`800 76px ${F}`,W-2*P).forEach(l=>{y+=84;T(l,P,y,`800 76px ${F}`,'#ffffff');});
     y+=52;T(`Makes ${num(r.yield)} ${noun(r,num(r.yield))} · ${num(r.minutes)} min per batch`,P,y,`500 32px ${F}`,'#a1a1aa');
     if(inc){
@@ -1094,7 +1122,7 @@ function drawCard(r,inc){
       y+=86;T('NOTES',P,y,`700 26px ${F}`,'#f9a8d4');y+=10;
       wrap(r.notes.trim(),`500 31px ${F}`,W-2*P).forEach(l=>{y+=46;T(l,P,y,`500 31px ${F}`,'#e4e4e7');});
     }
-    y+=90;T('Made with Batch',W/2,y,`600 24px ${F}`,'#52525b','center');
+    y+=90;T('Made with Batch+',W/2,y,`600 24px ${F}`,'#52525b','center');
     return y+P-20;
   };
   const tmp=document.createElement('canvas').getContext('2d');const H=Math.ceil(draw(tmp,false));
@@ -1235,7 +1263,7 @@ function exportXlsx(){
   });
   recipeSheets.forEach(([n,ws])=>X.utils.book_append_sheet(wb,ws,n));
   X.utils.book_append_sheet(wb,pw,'Packaging');
-  const ad={A1:{t:'s',v:'Data used by Batch to re-import this file. Do not edit.'},A2:{t:'s',v:JSON.stringify(S)},'!ref':'A1:A2'};
+  const ad={A1:{t:'s',v:'Data used by Batch+ to re-import this file. Do not edit.'},A2:{t:'s',v:JSON.stringify(S)},'!ref':'A1:A2'};
   X.utils.book_append_sheet(wb,ad,'AppData');
   wb.Workbook={Sheets:wb.SheetNames.map(n=>({name:n,Hidden:n==='AppData'?1:0}))};
   X.writeFile(wb,'batch-recipes.xlsx');
@@ -1250,7 +1278,7 @@ $('#fileIn').addEventListener('change',async e=>{
     else{
       if(!window.XLSX){toast('Excel import needs an internet connection the first time.');return;}
       const wb=window.XLSX.read(await f.arrayBuffer(),{type:'array'});const ws=wb.Sheets['AppData'];
-      if(!ws||!ws.A2){toast('That spreadsheet wasn\'t exported from Batch, so it can\'t be read back in.');return;}
+      if(!ws||!ws.A2){toast('That spreadsheet wasn\'t exported from Batch+, so it can\'t be read back in.');return;}
       data=JSON.parse(ws.A2.v);
     }
     let fromCookie=false;
