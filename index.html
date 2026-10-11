@@ -727,7 +727,7 @@ function profitHTML(){
       <div class="hero-l"><span class="caps muted" data-o="h-lab"></span><div class="metric-row"><span class="metric num" data-o="h-price"></span><span class="title muted">each</span></div><span class="glow hero-pf" data-o="h-pf"></span></div>
       <div class="stepper"><button data-a="step:-1" aria-label="Lower price">${ms('remove')}</button><button data-a="step:1" aria-label="Raise price">${ms('add')}</button></div>
     </div>
-    <input type="range" class="range" data-s="price" min="0" step="0.05" aria-label="Price each">
+    <input type="range" class="range" data-s="price" min="0" max="1000" step="1" aria-label="Price each">
     <div class="qty-box" data-tour="qty">
       <div class="qty-top"><span class="qty-l"><span class="caps muted">Order</span><span class="foot muted" data-o="q-tot"></span></span>
         <div class="stepper sm"><button data-a="qty:-1" aria-label="One fewer">${ms('remove')}</button><span class="qty-v num" data-o="q-v"></span><button data-a="qty:1" aria-label="One more">${ms('add')}</button></div></div>
@@ -840,6 +840,9 @@ function checklistHTML(r,c){
 
 /* ---------- live values ---------- */
 const priceStep=p=>p<5?0.25:p<20?0.5:1;
+const PMAX=250,PEXP=2.6;
+const sliderToPrice=v=>{const raw=PMAX*Math.pow(Math.max(0,Math.min(1000,v))/1000,PEXP);const snap=raw<10?0.05:raw<50?0.25:1;return Math.min(PMAX,Math.round(raw/snap)*snap);};
+const priceToSlider=p=>Math.round(1000*Math.pow(Math.min(PMAX,Math.max(0,p))/PMAX,1/PEXP));
 function update(){
   const o={};const r=R();
   S.recipes.forEach((x,i)=>o['pill-'+i]=x.name||'Untitled');
@@ -857,8 +860,7 @@ function update(){
       o['h-pf']=[`Profit ${money(x.profit)}`,x.profit<0];
       o['q-v']=String(q);o['q-tot']=`${q} ${noun(r,q)} · ${money(x.price)}`;
       document.querySelectorAll('[data-q]').forEach(b=>{const on=+b.dataset.q===q;b.classList.toggle('on',on);b.innerHTML=(on?'<i></i>':'')+'×'+b.dataset.q;});
-      const mx=Math.max(5,Math.ceil(Math.max(num(r.price)*2,x.costEach*4)));
-      const rg=document.querySelector('[data-s=price]');if(rg){rg.max=mx;if(document.activeElement!==rg)rg.value=num(r.price);}
+      const rg=document.querySelector('[data-s=price]');if(rg&&document.activeElement!==rg)rg.value=priceToSlider(num(r.price));
       o['tm-v']=`${nfmt(r.minutes)||0} min`;o['tm-hr']=[`${money(c.hourly)}/hour`,c.hourly<0];const tmx=Math.max(180,Math.ceil(num(r.minutes)));
       const tr=document.querySelector('[data-s=min]');if(tr){tr.max=tmx;if(document.activeElement!==tr)tr.value=num(r.minutes);}
       o['t-cost']=money(x.total);o['t-cost-s']=`${money(x.ing)} + ${money(x.pkg)} packaging`;
@@ -913,7 +915,7 @@ document.addEventListener('input',e=>{
   const t=e.target;if(!t.dataset)return;
   if(t.dataset.b){if(t.tagName!=='SELECT')SFX.key();setBound(t);if(/^r:(itemName|name)$/.test(t.dataset.b)){}return;}
   if(t.dataset.s){const mn=+t.min,mx=+t.max;SFX.tick(mx>mn?(+t.value-mn)/(mx-mn):.5);}
-  if(t.dataset.s==='price'){R().price=Math.round(+t.value*100)/100;save();update();}
+  if(t.dataset.s==='price'){R().price=Math.round(sliderToPrice(+t.value)*100)/100;save();update();}
   else if(t.dataset.s==='qty'){setQty(+t.value);}
   else if(t.dataset.s==='min'){R().minutes=+t.value;save();update();}
 });
@@ -944,7 +946,7 @@ const TOUR=[
   {tab:'profit',sel:'.pills',t:'Your recipes',d:'Tap a recipe to switch to it. The + adds a new one.',dur:7500,
     demo:async tok=>{if(S.recipes.length<2)return;await tapClick('.pill:nth-child(2)',tok);await sleep(1500,tok);await tapClick('.pill:nth-child(1)',tok);}},
   {tab:'profit',sel:'.hero .hero-top',t:'Set your price',d:'Drag the slider or tap − and + to set the price for one. The green box shows your profit on the order.',dur:11000,
-    demo:async tok=>{const v=+q('[data-s=price]').value;await drag('[data-s=price]',v+2,tok);await sleep(900,tok);await drag('[data-s=price]',v,tok);await sleep(400,tok);await tapClick('[data-a="step:1"]',tok);}},
+    demo:async tok=>{const v=+q('[data-s=price]').value;await drag('[data-s=price]',Math.min(1000,v+150),tok);await sleep(900,tok);await drag('[data-s=price]',v,tok);await sleep(400,tok);await tapClick('[data-a="step:1"]',tok);}},
   {tab:'profit',sel:'[data-tour=qty]',t:'How many?',d:'Set the order size with − and +, or tap a quick amount. Everything multiplies from the price of one.',dur:9500,
     demo:async tok=>{await tapClick('[data-a="qset:6"]',tok);await sleep(900,tok);await tapClick('[data-a="qset:24"]',tok);await sleep(900,tok);await tapClick('[data-a="qty:1"]',tok);await sleep(300,tok);await tap(tok);q('[data-a="qty:1"]').click();}},
   {tab:'profit',sel:'.time-card',t:'Time per batch',d:'Slide to match how long a batch takes you. Your hourly pay updates as you go.',dur:9000,
@@ -1013,7 +1015,7 @@ document.addEventListener('click',e=>{
   switch(a){
     case 'sel':S.active=+x;OPEN=null;break;
     case 'tab':S.tab=x;OPEN=null;window.scrollTo(0,0);break;
-    case 'step':{const p=num(r.price),st=priceStep(+x>0?p:Math.max(0,p-0.01));r.price=Math.max(0,Math.round((p+(+x)*st)*100)/100);save();update();return;}
+    case 'step':{const p=num(r.price),st=priceStep(+x>0?p:Math.max(0,p-0.01));r.price=Math.min(PMAX,Math.max(0,Math.round((p+(+x)*st)*100)/100));save();update();return;}
     case 'qty':setQty(qtyOf(r)+(+x));return;
     case 'qset':setQty(+x);return;
     case 'exp':OPEN=OPEN===rest?null:rest;break;
