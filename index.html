@@ -1,0 +1,1275 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>Batch · Recipe Calculator</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Batch">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block" rel="stylesheet">
+<style>
+:root{
+  --primary:#c4b5fd;--on-primary:#000000;--primary-container:#c4b5fd;--primary-fixed:#1a1730;--primary-fixed-dim:#c4b5fd;
+  --secondary:#f9a8d4;--secondary-container:#1f1119;
+  --surface:#000000;--sc-lowest:#0a0a0c;--sc-low:#111114;--sc:#16161a;--sc-high:#1d1d22;--sc-highest:#2c2c33;
+  --on-surface:#ffffff;--on-sv:#a1a1aa;--outline:#52525b;--outline-v:#27272a;--error:#fca5a5;
+  --grad:linear-gradient(90deg,#c4b5fd 0%,#f9a8d4 30%,#fdba74 55%,#86efac 78%,#93c5fd 100%);
+  --page:#000000;--hero-bg:#0a0a0c;--bar-bg:rgba(0,0,0,.72);--glass:rgba(255,255,255,.02);--tint:rgba(196,181,253,.1);--line:rgba(255,255,255,.09);--muted-2:rgba(161,161,170,.75);
+  --pink:rgba(249,168,212,.05);--pink-ink:#f9a8d4;--pink-line:rgba(249,168,212,.5);
+  --mint:rgba(134,239,172,.05);--mint-ink:#86efac;--mint-line:rgba(134,239,172,.5);
+  --butter:rgba(253,230,138,.05);--butter-ink:#fde68a;--butter-line:rgba(253,230,138,.5);
+  --sky:rgba(147,197,253,.05);--sky-ink:#93c5fd;--sky-line:rgba(147,197,253,.5);
+  --lav:rgba(196,181,253,.06);--lav-ink:#c4b5fd;--lav-line:rgba(196,181,253,.5);
+  --peach:rgba(253,186,116,.05);--peach-ink:#fdba74;--peach-line:rgba(253,186,116,.5);
+  --good:#86efac;--good-bg:rgba(134,239,172,.07);--bad-bg:rgba(252,165,165,.08);--scrim:rgba(0,0,0,.7);
+  --shadow-sm:none;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;width:100%;background:var(--surface);color:var(--on-surface)}
+body{background:var(--page) fixed;font:400 16px/22px Inter,-apple-system,system-ui,sans-serif;letter-spacing:-.011em;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;overscroll-behavior-y:none;min-height:100vh}
+button,input,select,textarea{font:inherit;color:inherit;letter-spacing:inherit}
+button{background:none;border:0;padding:0;margin:0;cursor:pointer;text-align:inherit}
+::-webkit-scrollbar{display:none}
+p{margin:0}
+
+/* icons */
+.ms{font-family:'Material Symbols Outlined';font-weight:normal;font-style:normal;font-size:20px;line-height:1;width:1em;height:1em;overflow:hidden;letter-spacing:normal;text-transform:none;display:inline-block;white-space:nowrap;direction:ltr;font-feature-settings:'liga';-webkit-font-feature-settings:'liga';font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;user-select:none;flex:none}
+html:not(.icons-ok) .ms{visibility:hidden}
+html.no-icons .ms{display:none}
+.ms.sm{font-size:16px}.ms.xs{font-size:14px}.ms.pri{color:var(--primary)}
+
+/* type */
+.caps{font-size:11px;line-height:14px;letter-spacing:.06em;font-weight:600;text-transform:uppercase}
+.foot{font-size:13px;line-height:18px;letter-spacing:-.003em}
+.callout{font-size:15px;line-height:20px;letter-spacing:-.009em}
+.bodyE{font-size:16px;line-height:22px;font-weight:600}
+.bodyE.sm{font-size:13px;line-height:17px}
+.title{font-size:17px;line-height:22px;font-weight:600;letter-spacing:-.016em;margin:0}
+.metric{font-size:28px;line-height:32px;font-weight:700;letter-spacing:-.025em}
+.b{font-weight:700}.muted{color:var(--on-sv)}.pri{color:var(--primary)}
+.num{font-variant-numeric:tabular-nums}
+.blk{display:block}
+.tiny{font-size:10px;line-height:13px;color:var(--muted-2);margin-top:2px;font-weight:500}
+.neg{color:var(--error)!important}
+.flex{display:flex;align-items:center;gap:4px}
+.empty{padding:8px 0}
+
+/* header */
+header.top{position:fixed;top:0;left:0;right:0;z-index:50;background:var(--bar-bg);-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);padding-top:env(safe-area-inset-top,0px);box-shadow:0 1px 0 var(--line)}
+.top-in{height:56px;padding:0 16px;display:flex;align-items:center;justify-content:space-between;position:relative;max-width:720px;margin:0 auto}
+.brand{display:flex;align-items:center;gap:6px;z-index:1}
+.logo{width:32px;height:32px;border-radius:10px;background:#0a0a0c;color:#fff;display:grid;place-items:center;box-shadow:inset 0 0 0 1px var(--lav-line)}
+.logo .ms{font-size:19px}
+.brand-name{font-size:20px;line-height:25px;font-weight:800;letter-spacing:-.02em;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.top-title{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;font-size:17px;line-height:22px;font-weight:600;letter-spacing:-.016em}
+.top-act{display:flex;align-items:center;gap:4px;z-index:1}
+.icon-btn{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;color:var(--on-sv);transition:color .15s}
+.icon-btn:hover{color:var(--primary)}
+.icon-btn .ms{font-size:22px}
+.avatar{width:32px;height:32px;border-radius:50%;background:#fff;color:#000;display:grid;place-items:center;transition:transform .1s}
+.avatar:active{transform:scale(.92)}
+.avatar .ms{font-size:18px}
+
+/* layout */
+main{padding:calc(56px + env(safe-area-inset-top,0px) + 4px) 0 calc(96px + env(safe-area-inset-bottom,0px))}
+#main{max-width:720px;margin:0 auto;padding:0 16px;display:flex;flex-direction:column;gap:16px}
+
+/* pills + capsule */
+.pills{display:flex;align-items:center;gap:4px;overflow-x:auto;margin:0 -16px;padding:4px 16px;scrollbar-width:none}
+.pill{flex:none;display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:999px;background:var(--glass);border:1px solid var(--line);color:var(--on-sv);font-size:11px;line-height:14px;letter-spacing:.06em;font-weight:600;text-transform:uppercase;transition:transform .1s,background .15s;max-width:240px}
+.pill .t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pill:hover{border-color:var(--lav-line);color:var(--lav-ink)}
+.pill:active{transform:scale(.95)}
+.pill.on{background:#fff;color:#000;border-color:#fff}
+.pill .ms{font-size:15px}
+.pill.add{padding:5px 9px}
+.pill.add .ms{font-size:16px}
+.capsule{margin-top:10px;background:var(--glass);border:1px solid var(--line);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-radius:12px;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px;box-shadow:var(--shadow-sm);font-size:13px;line-height:18px;color:var(--on-sv)}
+.capsule.first{margin-top:4px}
+.capsule b{color:var(--on-surface);font-weight:600}
+.cap-l,.cap-r{display:flex;align-items:center;gap:6px;min-width:0}
+.cap-l span:last-child,.cap-r span:last-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.capsule .ms{font-size:18px}
+.vr{width:1px;height:14px;background:var(--line);flex:none}
+
+/* cards */
+.card{background:var(--sc-lowest);border-radius:18px;padding:16px;border:1px solid var(--line)}
+.card-h{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-bottom:4px;margin-bottom:4px}
+.card-h p{margin-top:2px}
+.hero{display:flex;flex-direction:column;gap:16px;position:relative;overflow:hidden}
+.card.hero{background:var(--hero-bg)}
+.hero::before{content:"";position:absolute;inset:0 0 auto 0;height:2px;background:var(--grad);opacity:.9}
+.hero-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.hero-l{display:flex;flex-direction:column;min-width:0}
+.metric-row{display:flex;align-items:baseline;gap:8px;margin-top:2px;white-space:nowrap}
+.stepper{display:flex;align-items:center;background:transparent;border:1px solid var(--line);padding:4px;border-radius:12px;box-shadow:inset 0 2px 4px rgba(0,0,0,.05);gap:4px;flex:none}
+.stepper button{width:36px;height:36px;border-radius:8px;background:var(--sc);color:#fff;display:grid;place-items:center;box-shadow:var(--shadow-sm);transition:transform .1s}
+.stepper button:active{transform:scale(.9)}
+.stepper .ms{font-size:18px}
+.badge-wrap{padding:4px 6px;min-width:58px;text-align:center}
+.badge{display:inline-block;font-size:11px;line-height:14px;letter-spacing:.06em;font-weight:700;text-transform:uppercase;color:var(--lav-ink);background:transparent;box-shadow:inset 0 0 0 1px var(--lav-line);padding:2px 8px;border-radius:999px;white-space:nowrap}
+.badge.soft{font-weight:600;padding:2px 6px;border-radius:4px;background:var(--sc-high);color:var(--on-sv);text-transform:none;letter-spacing:.02em}
+.badge.soft.hi{background:var(--tint);color:var(--primary)}
+.slider{display:flex;flex-direction:column;gap:6px}
+.slider-lab{display:flex;justify-content:space-between;align-items:center;gap:8px;color:var(--on-sv)}
+.glow{display:inline-block;background:var(--good-bg);box-shadow:inset 0 0 0 1px var(--mint-line);color:var(--good)!important;border-radius:999px;padding:3px 10px;font-weight:700;white-space:nowrap;animation:glow 2.2s ease-in-out infinite}
+.badge.glow{text-transform:none;letter-spacing:.02em;padding:3px 8px}
+.glow.neg{background:var(--bad-bg);box-shadow:inset 0 0 0 1px rgba(252,165,165,.5)!important;color:var(--error)!important;animation:none;box-shadow:none}
+@keyframes glow{0%,100%{box-shadow:inset 0 0 0 1px rgba(134,239,172,.5),0 0 4px rgba(134,239,172,.15)}50%{box-shadow:inset 0 0 0 1px rgba(134,239,172,.9),0 0 16px rgba(134,239,172,.45)}}
+@media (prefers-reduced-motion:reduce){.glow{animation:none;box-shadow:inset 0 0 0 1px rgba(134,239,172,.8),0 0 10px rgba(134,239,172,.3)}}
+.range{width:100%;height:28px;accent-color:var(--primary);cursor:pointer;margin:0;padding:0;background:none;border:0}
+.seg-row{display:flex;align-items:center;justify-content:space-between;gap:8px 10px;flex-wrap:wrap;padding-top:4px}
+.seg{background:var(--sc-low);border:1px solid var(--line);padding:4px;border-radius:12px;display:flex;gap:4px}
+.seg button{padding:4px 12px;border-radius:8px;font-size:11px;line-height:14px;letter-spacing:.06em;font-weight:600;text-transform:uppercase;color:var(--on-sv);display:flex;align-items:center;gap:4px;transition:all .15s;white-space:nowrap}
+.seg button.on{background:var(--sc-high);color:#fff;box-shadow:inset 0 0 0 1px var(--lav-line)}
+.seg i{width:6px;height:6px;border-radius:50%;background:var(--lav-ink);display:inline-block}
+.hero-pf{align-self:flex-start;margin-top:10px}
+.seg.full{width:100%}
+.seg.full button{flex:1;justify-content:center}
+.pay{color:var(--good)}
+.panel{border-radius:14px;padding:10px 12px 12px;display:flex;flex-direction:column;gap:8px}
+.panel.buy{background:var(--peach);box-shadow:inset 0 0 0 1px var(--peach-line)}
+.panel.use{background:var(--lav);box-shadow:inset 0 0 0 1px var(--lav-line)}
+.panel-h{display:flex;align-items:center;gap:6px;font-size:11px;line-height:14px;letter-spacing:.06em;font-weight:700;text-transform:uppercase}
+.panel.buy .panel-h,.panel.buy .fld>.caps{color:var(--peach-ink)}
+.panel.use .panel-h,.panel.use .fld>.caps{color:var(--lav-ink)}
+.panel .fld>.caps{opacity:.8}
+.panel-g{display:grid;grid-template-columns:1.15fr .85fr 1fr;gap:8px}
+.panel.use .panel-g{grid-template-columns:repeat(2,minmax(0,1fr))}
+.panel.use .panel-g .fld:nth-child(3){grid-column:1/-1}
+.panel input,.panel select{background-color:var(--sc-lowest);padding:8px 10px}
+.panel select{padding-right:26px;background-position:right 8px center}
+.panel.buy input,.panel.buy select{border-color:var(--peach-line)}
+.panel.use input{border-color:var(--lav-line)}
+.panel.buy input:focus,.panel.buy select:focus{border-color:var(--peach-ink);box-shadow:0 0 0 3px rgba(253,186,116,.16)}
+.panel.use input:focus{border-color:var(--lav-ink);box-shadow:0 0 0 3px rgba(196,181,253,.16)}
+.panel .pre i{left:10px}.panel .pre input{padding-left:21px}
+.panel .auto-hint:empty{display:none}
+.sub2{display:flex;gap:6px;min-width:0;white-space:nowrap;overflow:hidden}
+.sub2 .sep{color:var(--on-sv)}
+.sub2 .m-buy{overflow:hidden;text-overflow:ellipsis}
+.m-use{color:var(--lav-ink)}.m-buy{color:var(--peach-ink)}
+.legend{display:flex;gap:12px;flex-wrap:wrap}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.legend i{width:8px;height:8px;border-radius:3px;background:currentColor;opacity:.85}
+.auto-hint{color:var(--good)}
+.auto-hint.neg{color:var(--on-sv)!important}
+.tot-line{display:flex;justify-content:space-between;align-items:center;padding:12px 0 0;margin-top:4px;border-top:1px solid var(--line)}
+.tot-line b{font-size:17px}
+.qty-box{display:flex;flex-direction:column;gap:10px;padding-top:14px;border-top:1px solid var(--line)}
+.qty-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.qty-l{display:flex;flex-direction:column;gap:2px;min-width:0}
+.qty-l .foot{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stepper.sm{padding:3px;gap:2px;align-items:center}
+.stepper.sm button{width:34px;height:34px}
+.qty-v{min-width:46px;text-align:center;font-size:20px;font-weight:700;letter-spacing:-.02em}
+.bars-cap{margin:-2px 0 4px}
+.time-card{padding:12px 16px;display:flex;flex-direction:column;gap:4px}
+.time-top{display:flex;align-items:center;gap:10px}
+.time-ic{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;flex:none}
+.time-l{display:flex;flex-direction:column;flex:1;min-width:0}
+.time-v{font-size:20px;line-height:24px;font-weight:700;letter-spacing:-.02em;white-space:nowrap}
+.range.sm{height:22px}
+.mini-stat{background:var(--sc-low);border-radius:12px;padding:8px 12px;text-align:right;display:flex;flex-direction:column;gap:2px;flex:none}
+
+/* pastel tones */
+.tn-pink{background:var(--pink)!important;color:var(--pink-ink)!important;box-shadow:inset 0 0 0 1px var(--pink-line)!important}
+.tn-mint{background:var(--mint)!important;color:var(--mint-ink)!important;box-shadow:inset 0 0 0 1px var(--mint-line)!important}
+.tn-butter{background:var(--butter)!important;color:var(--butter-ink)!important;box-shadow:inset 0 0 0 1px var(--butter-line)!important}
+.tn-sky{background:var(--sky)!important;color:var(--sky-ink)!important;box-shadow:inset 0 0 0 1px var(--sky-line)!important}
+.tn-lav{background:var(--lav)!important;color:var(--lav-ink)!important;box-shadow:inset 0 0 0 1px var(--lav-line)!important}
+.tn-peach{background:var(--peach)!important;color:var(--peach-ink)!important;box-shadow:inset 0 0 0 1px var(--peach-line)!important}
+.tile[class*=tn-]{border-color:transparent;box-shadow:none}
+.tile[class*=tn-] .tile-h,.mini-stat[class*=tn-] .caps{color:inherit}
+.tile[class*=tn-] .tile-v,.mini-stat[class*=tn-] .bodyE{color:#fff}
+.tile[class*=tn-] .tiny{color:var(--muted-2)}
+/* tiles */
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.tiles.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.tiles.in{margin-top:12px}
+.tile{background:var(--sc-lowest);border-radius:14px;padding:12px;box-shadow:var(--shadow-sm);border:1px solid var(--line);display:flex;flex-direction:column;justify-content:space-between;min-width:0}
+.tile.soft{background:var(--sc-low);box-shadow:none;border:0;gap:4px}
+.tile-h{display:flex;align-items:center;gap:4px;color:var(--on-sv);min-width:0}
+.tile-h .caps{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile-v{margin-top:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* rows */
+.rows>*+*{border-top:1px solid var(--line)}
+.row{width:100%;padding:10px 0;display:flex;align-items:center;justify-content:space-between;gap:12px;text-align:left;user-select:none}
+.row.static{cursor:default}
+.row:not(.static):hover .row-l .bodyE{color:var(--primary)}
+.row.hl .bodyE{color:var(--primary)}
+.row-l{display:flex;align-items:center;gap:12px;min-width:0}
+.row-l>span:last-child{min-width:0}
+.row-l .bodyE,.row-l .foot{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:color .15s,opacity .15s}
+.row-r{text-align:right;flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+.chev,.check{width:20px;height:20px;border-radius:6px;background:transparent;box-shadow:inset 0 0 0 1px var(--lav-line);display:grid;place-items:center;color:var(--lav-ink);flex:none;transition:transform .2s,background .15s,color .15s}
+.dot-ic{width:28px;height:28px;border-radius:8px;background:var(--sc);display:grid;place-items:center;color:var(--primary);flex:none;transition:background .15s}
+.dot-ic.on{background:#fff!important;color:#000!important;box-shadow:none!important}
+.item.open .chev{transform:rotate(180deg);background:#fff;color:#000;box-shadow:none}
+.check{color:var(--on-primary)}
+.check .ms{opacity:0}
+.check.on{background:var(--mint-ink);box-shadow:none}
+.check.on .ms{color:#000}
+.check.on .ms{opacity:1}
+.row.done .row-l .bodyE{text-decoration:line-through;opacity:.4}
+.editor{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:2px 0 14px 32px}
+.fld{display:flex;flex-direction:column;gap:4px;min-width:0}
+.fld>.caps{color:var(--on-sv)}
+.wide{grid-column:1/-1}
+.ed-foot{display:flex;align-items:center;justify-content:space-between;gap:8px}
+
+/* inputs */
+input,select,textarea{width:100%;min-width:0;background:var(--sc-low);border:1px solid var(--line);border-radius:10px;padding:9px 11px;font-size:16px;line-height:20px;outline:none;transition:border-color .15s,background .15s,box-shadow .15s}
+input:focus,select:focus,textarea:focus{border-color:var(--primary-fixed-dim);background:var(--sc-lowest);box-shadow:0 0 0 3px var(--tint)}
+input::placeholder,textarea::placeholder{color:var(--muted-2)}
+input[type=number]{-moz-appearance:textfield;appearance:textfield;font-variant-numeric:tabular-nums}
+input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+select{appearance:none;-webkit-appearance:none;padding-right:30px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239a9aa8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center}
+textarea{min-height:140px;resize:vertical;line-height:1.5}
+.pre,.suf{position:relative;display:block}
+.pre i,.suf i{position:absolute;top:50%;transform:translateY(-50%);font-style:normal;color:var(--on-sv);pointer-events:none}
+.pre i{left:11px;font-size:15px}
+.pre input{padding-left:23px}
+.suf i{right:11px;font-size:12px}
+.suf input{padding-right:54px}
+
+/* grouped list */
+.glist{background:var(--sc-low);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.gl-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px 6px 6px 14px;min-height:50px;cursor:text}
+.gl-row+.gl-row{border-top:1px solid var(--sc-high)}
+.gl-row .callout{min-width:0}
+.gl-in{flex:0 0 132px;position:relative;min-width:0}
+.gl-in.wide-in{flex:0 1 220px}
+.gl-in input{background:var(--sc-lowest);text-align:right;padding:8px 10px}
+.gl-in.pre i{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-style:normal;color:var(--on-sv);font-size:15px;pointer-events:none}
+.btn-row{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;border-radius:999px;background:var(--sc);color:var(--on-sv);font-size:13px;font-weight:500;transition:background .15s}
+.chip:hover{background:var(--sc-high)}
+.chip.danger{color:var(--error)}
+.note{margin:10px 2px 0}
+
+/* sections */
+.sec-h{display:flex;align-items:center;gap:6px;margin:12px 0 0}
+.sec-h.static{margin:12px 0 2px}
+.card-h+.sec-h,.card-h+div>.sec-h:first-child{margin-top:4px}
+.sec-in{flex:1;background:transparent;border-color:transparent;padding:4px 0;border-radius:6px;color:var(--primary);font-size:11px;line-height:14px;letter-spacing:.06em;font-weight:700;text-transform:uppercase}
+.sec-in:focus{padding:4px 8px}
+.link{display:inline-flex;align-items:center;gap:2px;color:var(--primary);font-size:12px;line-height:16px;font-weight:500;white-space:nowrap}
+.link:hover{text-decoration:underline}
+.link:active{opacity:.6}
+.link.danger{color:var(--error)}
+.icon-sm{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;color:var(--on-sv);flex:none}
+.icon-sm:hover{color:var(--error);background:var(--sc-low)}
+
+/* bars */
+.bars{display:flex;flex-direction:column;gap:10px;padding-top:4px}
+.bar-row{display:grid;grid-template-columns:minmax(0,128px) 1fr 54px;gap:10px;align-items:center;font-size:13px;line-height:18px}
+.bar-row .n{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-track{height:6px;background:var(--sc);border-radius:999px;overflow:hidden}
+.bar-fill{height:100%;background:var(--primary-container);border-radius:999px;transition:width .3s}
+.bar-fill.pk{background:#fdba74}
+.bar-row .v{text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
+
+/* tools */
+.tools{display:flex;flex-direction:column;gap:8px}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.tool{background:var(--sc-lowest);padding:12px;border-radius:14px;box-shadow:var(--shadow-sm);border:1px solid var(--line);display:flex;flex-direction:column;align-items:flex-start;gap:2px;transition:transform .1s;text-align:left}
+.tool:active{transform:scale(.98)}
+.tool-ic{width:28px;height:28px;border-radius:8px;background:var(--sc);color:var(--primary);display:grid;place-items:center;margin-bottom:8px}
+.tool-ic.sec{color:var(--secondary)}
+.tool-ic .ms{font-size:18px}
+.master{width:100%;background:#fff;color:#000;border-radius:14px;padding:14px 16px;box-shadow:0 0 28px rgba(196,181,253,.14);display:flex;align-items:center;justify-content:center;gap:8px;font-size:16px;line-height:22px;font-weight:600;letter-spacing:.01em;transition:transform .1s}
+.master:active{transform:scale(.98)}
+
+/* conversions */
+details.conv{margin-top:14px}
+details.conv summary{cursor:pointer;color:var(--on-sv);display:flex;align-items:center;gap:6px;list-style:none}
+details.conv summary::-webkit-details-marker{display:none}
+.conv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:0 16px;margin-top:8px;font-size:13px;line-height:18px}
+.conv-grid div{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--sc-high)}
+.conv-grid b{font-weight:600;white-space:nowrap}
+
+/* per-tab edge glow */
+body{--tc:249 168 212}
+body[data-tab=profit]{--tc:249 168 212}
+body[data-tab=recipe]{--tc:147 197 253}
+body[data-tab=pack]{--tc:253 224 138}
+body[data-tab=orders]{--tc:134 239 172}
+.edge{position:fixed;inset:0;pointer-events:none;z-index:55;box-shadow:inset 0 0 0 1.5px rgb(var(--tc) / .65),inset 0 0 22px 2px rgb(var(--tc) / .38),inset 0 0 70px 6px rgb(var(--tc) / .12);animation:edgePulse 2.8s ease-in-out infinite}
+@keyframes edgePulse{0%,100%{opacity:.5}50%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.edge{animation:none;opacity:.8}}
+@supports (padding:max(0px)){.edge{border-radius:max(0px,env(safe-area-inset-bottom,0px))}}
+/* tab bar */
+nav.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:50;padding-bottom:env(safe-area-inset-bottom,0px);background:var(--bar-bg);-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);box-shadow:0 -1px 0 var(--line)}
+.tab-in{display:flex;align-items:center;justify-content:space-around;height:64px;padding:0 4px;max-width:720px;margin:0 auto}
+.tab{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:64px;min-height:44px;gap:2px;color:var(--on-sv);transition:color .15s}
+.tab:hover{color:var(--on-surface)}
+.tab.on{color:rgb(var(--tc))}
+.tab.on .ms{background:rgb(var(--tc) / .08);box-shadow:inset 0 0 0 1px rgb(var(--tc) / .6),0 0 12px rgb(var(--tc) / .25);border-radius:12px;width:52px;height:30px;line-height:30px;text-align:center}
+.tab .ms{font-size:24px}
+.tab.on .ms{font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24}
+
+/* action sheet */
+.scrim{position:fixed;inset:0;background:var(--scrim);z-index:60;opacity:0;pointer-events:none;transition:opacity .2s}
+.scrim.on{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:61;max-width:560px;margin:0 auto;background:var(--surface);border-radius:20px 20px 0 0;padding:8px 16px calc(16px + env(safe-area-inset-bottom,0px));transform:translateY(105%);transition:transform .28s cubic-bezier(.2,.8,.2,1);box-shadow:0 -8px 30px rgba(0,0,0,.12);max-height:90vh;overflow-y:auto}
+.sheet.on{transform:none}
+.grab{width:36px;height:5px;border-radius:3px;background:var(--sc-highest);margin:0 auto 12px}
+.sheet h3{font-size:17px;line-height:22px;font-weight:600;letter-spacing:-.016em;text-align:center;margin:0 0 12px}
+.s-cap{padding:0 4px 6px;color:var(--on-sv)}
+.s-group{background:var(--sc-lowest);border-radius:12px;overflow:hidden;margin-bottom:12px;box-shadow:var(--shadow-sm)}
+.s-item{width:100%;display:flex;align-items:center;gap:12px;padding:11px 14px;font-size:15px;line-height:20px;transition:background .15s}
+.s-item+.s-item{border-top:1px solid var(--sc-high)}
+button.s-item:hover{background:var(--sc-low)}
+.s-item .ic{width:30px;height:30px;border-radius:8px;background:var(--sc);color:var(--primary);display:grid;place-items:center;flex:none}
+.s-item .ic .ms{font-size:18px}
+.s-item .txt{flex:1;text-align:left;min-width:0}
+.s-item .txt small{display:block;font-size:12px;line-height:16px;color:var(--on-sv)}
+.s-item.danger,.s-item.danger .ic{color:var(--error)}
+.switch{position:relative;width:46px;height:28px;flex:none}
+.switch input{opacity:0;position:absolute;inset:0;margin:0;padding:0;width:100%;height:100%;cursor:pointer;z-index:1}
+.switch span{position:absolute;inset:0;border-radius:999px;background:var(--sc-highest);transition:background .2s}
+.switch span::after{content:'';position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:transform .2s}
+.switch input:checked+span{background:var(--lav-ink)}
+.switch input:checked+span::after{transform:translateX(18px)}
+.switch input:focus-visible+span{box-shadow:0 0 0 3px var(--tint)}
+.cancel{width:100%;padding:13px;border-radius:12px;background:var(--sc-lowest);font-weight:600;color:var(--primary);box-shadow:var(--shadow-sm);text-align:center}
+
+.resume{position:fixed;left:50%;top:calc(64px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:60;display:flex;align-items:center;gap:10px;padding:8px 8px 8px 14px;border-radius:14px;background:var(--sc-lowest);box-shadow:inset 0 0 0 1px var(--butter-line),0 10px 30px rgba(0,0,0,.5);color:var(--on-surface);font-size:14px;max-width:calc(100% - 32px)}
+.resume[hidden]{display:none}
+.resume>.ms{color:var(--butter-ink);font-size:18px}
+.resume .txt{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.resume button{padding:6px 12px;border-radius:9px;background:#fff;color:#000;font-weight:600;font-size:13px}
+.resume button.x{background:transparent;color:var(--on-sv);padding:4px;display:grid;place-items:center}
+.resume button.x .ms{font-size:18px}
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(12px);background:var(--on-surface);color:var(--surface);padding:10px 16px;border-radius:12px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:all .25s;z-index:70;max-width:calc(100% - 32px);text-align:center}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+.top-act{gap:0}
+/* tour */
+.tour{position:fixed;inset:0;z-index:90}
+.tour[hidden]{display:none}
+.tour-spot{position:fixed;border-radius:16px;box-shadow:0 0 0 9999px rgba(0,0,0,.72);outline:1px solid rgba(196,181,253,.9);outline-offset:0;transition:top .35s cubic-bezier(.2,.8,.2,1),left .35s cubic-bezier(.2,.8,.2,1),width .35s cubic-bezier(.2,.8,.2,1),height .35s cubic-bezier(.2,.8,.2,1);pointer-events:none}
+.tour-card{position:fixed;background:var(--sc-lowest);color:var(--on-surface);border-radius:18px;padding:16px;box-shadow:0 16px 48px rgba(0,0,0,.28);border:1px solid var(--line);transition:top .35s cubic-bezier(.2,.8,.2,1),left .35s cubic-bezier(.2,.8,.2,1)}
+.tour-card h4{font-size:18px;line-height:24px;font-weight:700;letter-spacing:-.018em;margin:6px 0 4px}
+.tour-card p{font-size:15px;line-height:21px;color:var(--on-sv)}
+.tour-top{display:flex;justify-content:space-between;align-items:center}
+.tour-x{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:var(--on-sv);margin:-6px -6px 0 0}
+.tour-x:hover{background:var(--sc)}
+.tour-x .ms{font-size:18px}
+.tour-foot{display:flex;justify-content:space-between;align-items:center;margin-top:16px;gap:10px}
+.tour-dots{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+@media (max-width:480px){.tour-dots{display:none}}
+.tour-dots i{width:6px;height:6px;border-radius:3px;background:var(--sc-highest);transition:all .25s}
+.tour-dots i.on{width:16px;background:var(--primary)}
+.tour-nav{display:flex;gap:4px;flex:none}
+.tour-btn{padding:8px 16px;border-radius:10px;background:#fff;color:#000;font-weight:600;font-size:14px;line-height:20px}
+.tour-btn.ghost{background:transparent;color:var(--on-sv)}
+.tour-play{box-shadow:inset 0 0 0 1px var(--lav-line)}
+.tour-btn:disabled{opacity:.3;cursor:default}
+.tour-prog{height:3px;border-radius:2px;background:var(--sc);overflow:hidden;margin:-4px 0 12px}
+.tour-prog i{display:block;height:100%;width:0;background:var(--grad);border-radius:2px}
+.tour-meta{display:flex;align-items:center;gap:8px;min-width:0}
+.live{display:inline-flex;align-items:center;gap:5px;text-transform:uppercase;letter-spacing:.06em;font-size:10px;padding:2px 7px;border-radius:999px}
+.live[hidden]{display:none}
+.live i{width:6px;height:6px;border-radius:50%;background:currentColor;animation:blink 1.2s ease-in-out infinite}
+@keyframes blink{50%{opacity:.25}}
+.tour-play{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--lav);color:var(--lav-ink)}
+.tour-play .ms{font-size:18px}
+.tour-nav{align-items:center}
+.tour-finger{position:fixed;left:0;top:0;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.5);border:2px solid #fff;box-shadow:0 6px 18px rgba(0,0,0,.35),inset 0 0 0 7px rgba(196,181,253,.45);pointer-events:none;opacity:0;transition-property:transform,opacity;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:600ms;will-change:transform}
+.tour-finger.on{opacity:1}
+.tour-finger::after{content:'';position:absolute;inset:-2px;border-radius:50%;border:2px solid rgba(249,168,212,.9);opacity:0}
+.tour-finger.tap{animation:fpress .28s ease}
+.tour-finger.tap::after{animation:fripple .65s ease-out}
+@keyframes fpress{50%{scale:.78}}
+@keyframes fripple{0%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(2.5)}}
+.demo-focus{border-color:var(--primary-fixed-dim)!important;background:var(--sc-lowest)!important;box-shadow:0 0 0 3px var(--tint)!important}
+input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none}
+
+@media (min-width:640px){
+  .editor{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .gl-in{flex-basis:160px}
+}
+@media (max-width:380px){
+  .seg button{padding:4px 8px}
+  .metric{font-size:24px;line-height:28px}
+  .badge-wrap{min-width:50px;padding:4px 2px}
+  .tile{padding:10px}
+  .editor{padding-left:0}
+}
+
+/* print fallback */
+#printArea{display:none}
+@media print{
+  body{background:#fff;color:#000}
+  header.top,main,nav.tabbar,.scrim,.sheet,.toast{display:none!important}
+  #printArea{display:block;font:11pt/1.45 Arial,sans-serif}
+  #printArea .pg{page-break-after:always}
+  #printArea h1{font-size:22pt;margin:0 0 4pt}
+  #printArea .meta{color:#555;margin-bottom:12pt;font-size:9.5pt}
+  #printArea table{width:100%;border-collapse:collapse;margin:6pt 0 14pt;font-size:9.5pt}
+  #printArea th{background:#111114;color:#fff;text-align:left;padding:5pt}
+  #printArea td{border-bottom:1px solid #ddd;padding:5pt}
+  #printArea td.sec{background:#f5f5f7;font-weight:bold;color:#111114}
+  #printArea h3{font-size:13pt;margin:10pt 0 4pt}
+  #printArea .notes{white-space:pre-wrap;font-size:10pt}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <div class="brand"><span class="logo"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21h14"/><path d="M7 21V9"/><path d="M5.5 5.5c0-1.7 1.3-3 3-3h7.5c2.2 0 4 1.8 4 4v.5c0 1.1-.9 2-2 2H7"/><path d="M15 9v2.5"/><path d="M10.5 13h9l-1.3 5.2a2 2 0 0 1-1.9 1.5h-2.6a2 2 0 0 1-1.9-1.5z"/></svg></span><span class="brand-name">Batch</span></div>
+    <div class="top-title"><span id="title">Calculator</span></div>
+    <div class="top-act">
+      <button class="icon-btn" data-a="tour" data-tour="help" aria-label="Take the tour"><span class="ms" aria-hidden="true">help</span></button>
+      <button class="icon-btn" data-a="sheet" aria-label="Menu"><span class="ms" aria-hidden="true">menu</span></button>
+    </div>
+  </div>
+</header>
+
+<div class="edge" aria-hidden="true"></div>
+<main><div id="main"></div></main>
+
+<nav class="tabbar" aria-label="Sections">
+  <div class="tab-in">
+    <button class="tab" data-a="tab:profit" data-tab="profit"><span class="ms" aria-hidden="true">calculate</span><span class="caps">Calculator</span></button>
+    <button class="tab" data-a="tab:recipe" data-tab="recipe"><span class="ms" aria-hidden="true">menu_book</span><span class="caps">Recipe</span></button>
+    <button class="tab" data-a="tab:pack" data-tab="pack"><span class="ms" aria-hidden="true">inventory_2</span><span class="caps">Packaging</span></button>
+    <button class="tab" data-a="tab:orders" data-tab="orders"><span class="ms" aria-hidden="true">receipt_long</span><span class="caps">Orders</span></button>
+  </div>
+</nav>
+
+<div class="scrim" id="scrim" data-a="closeSheet"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Menu" aria-hidden="true">
+  <div class="grab"></div>
+  <h3>Menu</h3>
+  <div class="caps s-cap">Share recipe</div>
+  <div class="s-group">
+    <button class="s-item" data-a="imgOne"><span class="ic tn-sky"><span class="ms" aria-hidden="true">image</span></span><span class="txt">Save recipe as image<small>Save to Photos or send in a text</small></span></button>
+    <button class="s-item" data-a="pdfOne"><span class="ic tn-pink"><span class="ms" aria-hidden="true">picture_as_pdf</span></span><span class="txt">Recipe PDF<small>The recipe you have selected</small></span></button>
+    <button class="s-item" data-a="pdfAll"><span class="ic tn-lav"><span class="ms" aria-hidden="true">library_books</span></span><span class="txt">All recipes PDF<small>One PDF, a page per recipe</small></span></button>
+    <label class="s-item"><span class="ic tn-mint"><span class="ms" aria-hidden="true">payments</span></span><span class="txt">Include costs &amp; pricing<small>Turn off for a clean recipe card (image and PDF)</small></span><span class="switch"><input type="checkbox" id="incCosts" checked><span></span></span></label>
+  </div>
+  <div class="caps s-cap">Settings</div>
+  <div class="s-group">
+    <label class="s-item"><span class="ic tn-sky"><span class="ms" aria-hidden="true">volume_up</span></span><span class="txt">Sound effects<small>Clicks, slider ticks and chimes</small></span><span class="switch"><input type="checkbox" id="soundOn" checked><span></span></span></label>
+  </div>
+  <div class="caps s-cap">Spreadsheet</div>
+  <div class="s-group">
+    <button class="s-item" data-a="xlsx"><span class="ic tn-mint"><span class="ms" aria-hidden="true">table_view</span></span><span class="txt">Export to Excel<small>A tab per recipe with live formulas</small></span></button>
+    <button class="s-item" data-a="import"><span class="ic tn-sky"><span class="ms" aria-hidden="true">upload_file</span></span><span class="txt">Import Excel<small>From Batch or the cookie app</small></span></button>
+    <button class="s-item danger" data-a="reset"><span class="ic"><span class="ms" aria-hidden="true">restart_alt</span></span><span class="txt">Reset to sample recipes</span></button>
+  </div>
+  <button class="cancel" data-a="closeSheet">Done</button>
+</div>
+
+<div class="tour" id="tour" hidden>
+  <div class="tour-spot"></div>
+  <div class="tour-card" role="dialog" aria-modal="true" aria-labelledby="tourTitle">
+    <div class="tour-prog"><i id="tourBar"></i></div>
+    <div class="tour-top"><span class="tour-meta"><span class="caps pri" id="tourStep"></span><span class="badge tn-pink live" id="tourLive" hidden><i></i>Live demo</span></span><button class="tour-x" data-a="tourEnd" aria-label="Close tour"><span class="ms" aria-hidden="true">close</span></button></div>
+    <h4 id="tourTitle"></h4><p id="tourText"></p>
+    <div class="tour-foot"><div class="tour-dots" id="tourDots"></div><div class="tour-nav"><button class="tour-play" data-a="tourAuto" id="tourPlay" aria-label="Pause autoplay"><span class="ms" aria-hidden="true">pause</span></button><button class="tour-btn ghost" data-a="tourPrev" id="tourPrev">Back</button><button class="tour-btn" data-a="tourNext" id="tourNext">Next</button></div></div>
+  </div>
+  <div class="tour-finger" id="tourFinger" aria-hidden="true"></div>
+</div>
+<div id="printArea"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<input type="file" id="fileIn" accept=".xlsx,.json" hidden>
+
+<script>
+(function(){var d=document.documentElement,done=false;function ok(){done=true;d.classList.remove('no-icons');d.classList.add('icons-ok');}function bad(){if(!done){done=true;d.classList.add('no-icons');}}
+try{document.fonts.load("24px 'Material Symbols Outlined'","cookie").then(function(f){f&&f.length?ok():bad();},bad);}catch(e){bad();}setTimeout(function(){if(!done)bad();},4000);})();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script>
+(function(){
+'use strict';
+const KEY='batchRecipeCalc.v1',OLDKEY='cookieCostCalc.v1',TOURKEY='batchAnyTourSeen1';
+const UNITS={'lb':{b:'oz',f:16},'oz':{b:'oz',f:1},'kg':{b:'g',f:1000},'g':{b:'g',f:1},'fl oz':{b:'fl oz',f:1},'gallon':{b:'fl oz',f:128},'quart':{b:'fl oz',f:32},'liter':{b:'fl oz',f:33.814},'ml':{b:'fl oz',f:1/29.5735},'dozen':{b:'each',f:12},'each':{b:'each',f:1},'stick':{b:'stick',f:1},'cup':{b:'cup',f:1},'tbsp':{b:'tbsp',f:1},'tsp':{b:'tsp',f:1}};
+const CONV=[['1 cup','16 tbsp · 8 fl oz'],['1 tbsp','3 tsp · 0.5 fl oz'],['1 pinch','≈ 1/16 tsp'],['1 stick butter','1/2 cup · 4 oz'],['1 cup flour','≈ 4.25 oz'],['1 cup granulated sugar','≈ 7 oz'],['1 cup brown sugar (packed)','≈ 7.5 oz'],['1 cup powdered sugar','≈ 4 oz'],['1 cup chocolate chips','≈ 6 oz'],['1 cup water, milk or cream','≈ 8 oz'],['1 cup oil','≈ 7 oz'],['1 cup uncooked rice','≈ 7 oz'],['1 cup shredded cheese','≈ 4 oz'],['1 cup honey or syrup','≈ 12 oz'],['1 tsp salt or baking soda','≈ 0.2 oz'],['1 tsp baking powder','≈ 0.16 oz'],['1 lb','16 oz · 454 g']];
+/* ---------- measures ---------- */
+const MU=[['cup','cup'],['tbsp','tbsp'],['tsp','tsp'],['pinch','pinch'],['floz','fl oz'],['ml','ml'],['l','liter'],['oz','oz (weight)'],['lb','lb'],['g','g'],['kg','kg'],['stick','stick (butter)'],['each','each'],['dozen','dozen']];
+const MUW={cup:['cup','cups'],tbsp:['tbsp','tbsp'],tsp:['tsp','tsp'],pinch:['pinch','pinches'],floz:['fl oz','fl oz'],ml:['ml','ml'],l:['liter','liters'],oz:['oz','oz'],lb:['lb','lb'],g:['g','g'],kg:['kg','kg'],stick:['stick','sticks'],each:['each','each'],dozen:['dozen','dozen']};
+const DENS=[ // ounces per cup, standard kitchen weights
+  [/peanut butter|almond butter/,9.5],[/cream cheese/,8],
+  [/water|milk|cream|broth|stock|juice|coffee|tea\b|yogurt|buttermilk|vinegar|wine|beer/,8],[/oil/,7],
+  [/brown sugar/,7.5],[/powdered|confectioner|icing sugar/,4],[/sugar/,7],
+  [/flour/,4.25],[/cocoa/,3],[/chocolate|chip/,6],[/butter|margarine/,8],[/shortening|lard/,6.75],
+  [/baking soda/,9.6],[/baking powder/,7.68],[/salt/,9.6],[/meringue/,4.8],[/corn ?starch/,4],
+  [/rice/,7],[/cheese/,4],[/oat/,3.2],[/pecan|walnut|almond|nut/,4],[/honey|molasses|syrup/,12],[/sprinkle|nonpareil/,6.4]];
+const VOLC={cup:1,tbsp:1/16,tsp:1/48,pinch:1/768,floz:1/8,ml:1/236.6,l:1000/236.6},WTOZ={oz:1,lb:16,g:1/28.3495,kg:35.274};
+const UFR={'½':' 1/2','¼':' 1/4','¾':' 3/4','⅓':' 1/3','⅔':' 2/3','⅛':' 1/8','⅜':' 3/8','⅝':' 5/8','⅞':' 7/8'};
+function parseQty(str){
+  const t=String(str??'').replace(/[½¼¾⅓⅔⅛⅜⅝⅞]/g,c=>UFR[c]).replace(/(\d)-(\d+\/)/g,'$1 $2').trim();
+  const m=t.match(/^(\d+\s+\d+\/\d+|\d+\/\d+|\d+(?:\.\d+)?|\.\d+)$/);if(!m)return null;
+  const q=m[1].split(/\s+/).reduce((a,x)=>{if(x.includes('/')){const[n,d]=x.split('/');return a+(+d?+n/+d:0);}return a+ +x;},0);
+  return q>0?q:null;
+}
+function convertQty(q,u,name,pkgUnit){
+  const base=(UNITS[pkgUnit]||{b:pkgUnit}).b,n=String(name||'').toLowerCase();
+  const d=(DENS.find(([re])=>re.test(n))||[])[1]||null;
+  let cups=null,oz=null,cnt=null;
+  if(u in VOLC){cups=q*VOLC[u];if(d)oz=cups*d;}
+  else if(u in WTOZ){oz=q*WTOZ[u];if(d)cups=oz/d;}
+  else if(u==='stick'){oz=q*4;cups=q/2;}
+  else if(u==='dozen')cnt=q*12;else cnt=q;
+  const out={oz:oz,g:oz==null?null:oz*28.3495,'fl oz':cups==null?null:cups*8,cup:cups,tbsp:cups==null?null:cups*16,tsp:cups==null?null:cups*48,stick:oz==null?null:oz/4,each:cnt}[base];
+  if(out==null||!isFinite(out))return{v:null,why:(u in VOLC)&&!d&&base!=='fl oz'&&base!=='cup'&&base!=='tbsp'&&base!=='tsp'?'dens':'unit',base};
+  return{v:Math.round(out*1000)/1000,base};
+}
+function kitchenNum(q,frac){
+  if(!frac)return String(Math.round(q*100)/100);
+  const w=Math.floor(q+1e-9),f=q-w,C=[[0,''],[1/8,'1/8'],[1/4,'1/4'],[1/3,'1/3'],[3/8,'3/8'],[1/2,'1/2'],[5/8,'5/8'],[2/3,'2/3'],[3/4,'3/4'],[7/8,'7/8'],[1,'']];
+  let best=C[0];for(const c of C)if(Math.abs(f-c[0])<Math.abs(f-best[0]))best=c;
+  if(Math.abs(f-best[0])>0.02)return String(Math.round(q*100)/100);
+  const W=best[0]===1?w+1:w;return W&&best[1]?`${W} ${best[1]}`:best[1]||String(W);
+}
+const FRAC_U=['cup','tbsp','tsp','pinch','stick','dozen','each'];
+function unitLabel(v,base,name){if(base==='stick')return v===1?'stick':'sticks';if(base==='each')return /egg/i.test(name||'')?(v===1?'egg':'eggs'):'each';if(base==='cup')return v===1?'cup':'cups';return base;}
+function muWord(u,q){const w=MUW[u]||[u,u];return w[q>1+1e-9?1:0];}
+function measureText(it){const q=parseQty(it.mq);if(q==null)return '';return `${String(it.mq).trim()} ${muWord(it.mu,q)}`;}
+function measureLine(it){
+  const q=parseQty(it.mq);if(q==null)return null;const m=measureText(it);const r=convertQty(q,it.mu,it.name,it.unit);
+  if(r.v==null)return{m,eq:null};const same=(it.mu==='floz'?'fl oz':it.mu)===r.base;
+  return{m,eq:same?null:`${nfmt(r.v)} ${unitLabel(r.v,r.base,it.name)}`,v:r.v,base:r.base};
+}
+function autoAmount(si,ii){
+  const it=R().sections[si].items[ii];const q=parseQty(it.mq);if(q==null)return;const res=convertQty(q,it.mu,it.name,it.unit);if(res.v==null)return;
+  it.amount=res.v;const el=document.querySelector(`[data-b="i:${si}:${ii}:amount"]`);if(el&&document.activeElement!==el)el.value=nfmt(res.v);
+}
+function autoQty(si,ii){
+  const it=R().sections[si].items[ii];const amt=num(it.amount);if(!(amt>0))return;
+  const one=convertQty(1,it.mu,it.name,it.unit);if(one.v==null||!(one.v>0))return;
+  const t=kitchenNum(amt/one.v,FRAC_U.includes(it.mu));if(t===it.mq)return;it.mq=t;
+  const el=document.querySelector(`[data-b="i:${si}:${ii}:mq"]`);if(el&&document.activeElement!==el)el.value=t;
+}
+
+/* ---------- data ---------- */
+let uid=Date.now();
+const id=()=>'r'+(uid++).toString(36);
+const I=(name,price,size,unit,mq,mu,amount)=>({name,price,size,unit,mq,mu,amount});
+const newItem=()=>I('',null,null,'oz','','cup',null);
+function defaults(){
+  return {
+    active:0,tab:'profit',incCosts:true,
+    packaging:{
+      items:[{name:'Boxes',price:28,count:50,perItem:0,perOrder:1},{name:'Wax paper',price:0.07,count:200,perItem:0,perOrder:1},{name:'Labels - 300 pack',price:5.54,count:300,perItem:0,perOrder:1},{name:'Labels - 360 pack',price:8.98,count:360,perItem:0,perOrder:1}],
+      label:{inkPrice:30,pages:400,perSheet:null,perItem:0,perOrder:2}
+    },
+    recipes:[
+      {id:id(),name:'Chocolate Chip Cookies',yield:12,itemName:'cookies',price:2,minutes:40,qty:12,notes:'',
+       sections:[
+        {name:'Dough',items:[I('Butter',5.96,8,'stick','1','cup',2),I('Granulated sugar',7.38,10,'lb','3/4','cup',5.25),I('Brown sugar',1.99,32,'oz','3/4','cup',5.625),I('Eggs',8.05,8,'dozen','2','each',2),I('Vanilla extract',10.88,16,'fl oz','1','tsp',0.167),I('Flour',2.49,5,'lb','2 1/4','cup',9.563),I('Baking soda',10.2,13.5,'lb','1','tsp',0.2),I('Salt',1.89,26,'oz','1','tsp',0.2)]},
+        {name:'Mix-ins',items:[I('Chocolate chips',16.99,72,'oz','2','cup',12)]}]},
+      {id:id(),name:'Decorated Sugar Cookies',yield:15,itemName:'cookies',price:3,minutes:90,qty:12,notes:'',
+       sections:[
+        {name:'Dough',items:[I('Butter',2.99,4,'stick','1','cup',2),I('Granulated sugar',7.38,10,'lb','1','cup',7),I('Flour',2.49,5,'lb','3','cup',12.75),I('Eggs',8.05,8,'dozen','1','each',1),I('Vanilla extract',10.88,16,'fl oz','1','tsp',0.167),I('Almond extract',5.16,2,'fl oz','1/2','tsp',0.083),I('Baking powder',1.99,8.1,'oz','2','tsp',0.32)]},
+        {name:'Royal Icing & Color',items:[I('Powdered sugar',1.99,2,'lb','4','cup',16),I('Meringue powder',8.48,4,'oz','3','tbsp',0.9),I('Gel food coloring',null,null,'oz','','tsp',null)]}]}
+    ]
+  };
+}
+function isNew(d){return d&&Array.isArray(d.recipes)&&d.packaging&&Array.isArray(d.packaging.items)&&d.packaging.label&&d.recipes.every(r=>Array.isArray(r.sections))&&!d.recipes.some(r=>'dozenPrice' in r||'planDozens' in r);}
+function isOld(d){return d&&Array.isArray(d.recipes)&&d.packaging&&Array.isArray(d.packaging.items)&&d.recipes.some(r=>'dozenPrice' in r||'planDozens' in r||(r.sections||[]).some(s=>(s.items||[]).some(it=>'measure' in it)));}
+/* convert data from the cookie app */
+function fromOld(d){
+  const oldParse=str=>{
+    let t=String(str||'').toLowerCase().replace(/[½¼¾⅓⅔⅛⅜⅝⅞]/g,c=>UFR[c]).replace(/\s*\([^)]*\)\s*$/,'').trim();
+    const m=t.match(/^(\d+\s+\d+\/\d+|\d+\/\d+|\d+(?:\.\d+)?|\.\d+)\s*(.*)$/);if(!m)return null;const q=parseQty(m[1]);if(q==null)return null;const r=m[2];
+    const U=[[/^(fl\.?\s*oz|fluid\s*ounces?)\b/,'floz'],[/^(cups?|c)\b/,'cup'],[/^(tablespoons?|tbsps?|tbls?|tbs)\b/,'tbsp'],[/^(teaspoons?|tsps?)\b/,'tsp'],[/^(ounces?|oz)\b/,'oz'],[/^(pounds?|lbs?)\b/,'lb'],[/^(kilograms?|kgs?)\b/,'kg'],[/^(grams?|g)\b/,'g'],[/^(milliliters?|ml)\b/,'ml'],[/^(liters?|l)\b/,'l'],[/^sticks?\b/,'stick'],[/^dozen\b/,'dozen'],[/^pinch(es)?\b/,'pinch']];
+    for(const[re,u]of U){const mm=r.match(re);if(mm)return{q,u,rest:r.slice(mm[0].length).trim()};}
+    return{q,u:'each',rest:''};
+  };
+  const recipes=d.recipes.map(r=>({id:r.id||id(),name:r.name||'Recipe',yield:num(r.yield)||12,itemName:'cookies',
+    price:num(r.price)||(num(r.dozenPrice)?Math.round(num(r.dozenPrice)/12*100)/100:2),minutes:num(r.minutes)||45,
+    qty:num(r.planDozens)?num(r.planDozens)*12:12,notes:r.notes||'',
+    sections:(r.sections||[]).map(s=>({name:s.name||'Ingredients',items:(s.items||[]).map(it=>{const pm=oldParse(it.measure);
+      return {name:(it.name||'')+(pm&&pm.rest?`, ${pm.rest}`:''),price:it.price??null,size:it.size??null,unit:it.unit||'oz',
+        mq:pm?kitchenNum(pm.q,true):'',mu:pm?pm.u:'cup',amount:it.amount??null};})}))}));
+  const P=d.packaging||{items:[],label:{}},L=P.label||{};
+  return {active:0,tab:'profit',incCosts:d.incCosts!==false,sound:d.sound,recipes,
+    packaging:{items:(P.items||[]).map(i=>({name:i.name||'',price:i.price??null,count:i.count??null,perItem:0,perOrder:num(i.dozen)||0})),
+      label:{inkPrice:L.inkPrice??null,pages:L.pages??null,perSheet:L.perSheet??null,perItem:0,perOrder:num(L.dozen)||0}}};
+}
+let S,BROUGHT=false;
+function load(){
+  try{const raw=localStorage.getItem(KEY);if(raw){const d=JSON.parse(raw);if(isNew(d))return d;}}catch(e){}
+  try{const raw=localStorage.getItem(OLDKEY);if(raw){const d=JSON.parse(raw);if(isOld(d)){BROUGHT=true;return fromOld(d);}}}catch(e){}
+  return defaults();
+}
+let DEMO=false;
+function save(){if(DEMO)return;S.savedAt=Date.now();try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+
+/* ---------- math ---------- */
+const num=v=>{const n=parseFloat(v);return isFinite(n)?n:0};
+const blank=v=>v===null||v===undefined||v==='';
+S=load();
+if(S.active>=S.recipes.length)S.active=0;
+const R=()=>S.recipes[S.active];
+const plural=r=>String(r.itemName||'').trim()||'servings';
+function sing(r){const full=plural(r);const ofm=full.match(/^(.*?)( of .*)$/i);if(ofm)return sing({itemName:ofm[1]})+ofm[2];const p=full;const l=p.toLowerCase();const IRR={loaves:'loaf',halves:'half',leaves:'leaf',people:'person',children:'child'};
+  const words=p.split(' '),last=words.pop(),ll=last.toLowerCase();let one;
+  if(IRR[ll])one=IRR[ll];else if(/(k|n|p|th|g|z)ies$/.test(ll))one=last.slice(0,-1);else if(/ies$/.test(ll))one=last.slice(0,-3)+'y';
+  else if(/(ches|shes|sses|xes|oes)$/.test(ll))one=last.slice(0,-2);else if(/s$/.test(ll)&&!/ss$/.test(ll))one=last.slice(0,-1);else one=last;
+  return [...words,one].join(' ');}
+const noun=(r,n)=>Math.abs(n-1)<1e-9?sing(r):plural(r);
+const qtyOf=r=>Math.max(1,Math.round(num(r.qty))||1);
+function calcPack(){
+  const P=S.packaging,L=P.label;
+  const items=P.items.map(it=>({...it,each:num(it.count)?num(it.price)/num(it.count):0}));
+  const ps=num(L.perSheet),page=num(L.pages)?num(L.inkPrice)/num(L.pages):0,ink=ps?page/ps:0;
+  const perItem=items.reduce((a,i)=>a+i.each*num(i.perItem),0)+ink*num(L.perItem);
+  const perOrder=items.reduce((a,i)=>a+i.each*num(i.perOrder),0)+ink*num(L.perOrder);
+  return {items,page,ink,perItem,perOrder};
+}
+function calc(r){
+  const y=num(r.yield);let batch=0;const rows=[];
+  r.sections.forEach((s,si)=>s.items.forEach((it,ii)=>{
+    const u=UNITS[it.unit]||{b:it.unit||'',f:1};
+    const d=num(it.size)*u.f;const cpu=d?num(it.price)/d:0;const cb=cpu*num(it.amount);
+    batch+=cb;rows.push({si,ii,name:it.name,cpu,cb,cc:y?cb/y:0,base:u.b});
+  }));
+  const each=y?batch/y:0,pk=calcPack(),q=qtyOf(r);
+  const mk=n=>{const price=num(r.price)*n,ing=each*n,pkg=pk.perItem*n+pk.perOrder,total=ing+pkg,profit=price-total;return {n,price,ing,pkg,total,profit,margin:price?profit/price:0,costEach:total/n};};
+  const order=mk(q),one=mk(1);
+  const profitEach=order.profit/q,pbatch=profitEach*y,hourly=num(r.minutes)?pbatch/(num(r.minutes)/60):0;
+  const batches=y?Math.ceil(q/y):0;
+  const plan={batches,leftover:Math.max(0,batches*y-q),ingredients:batches*batch,packaging:order.pkg,revenue:order.price,hours:batches*num(r.minutes)/60};
+  plan.profit=plan.revenue-plan.ingredients-plan.packaging;
+  return {rows,batch,each,pk,q,order,one,profitEach,pbatch,hourly,plan};
+}
+
+/* ---------- format ---------- */
+const money=v=>(v<0?'-':'')+'$'+Math.abs(v).toFixed(2);
+const money3=v=>(v<0?'-':'')+'$'+Math.abs(v).toFixed(3);
+const cents=v=>Math.abs(v)<1?(v<0?'-':'')+(Math.abs(v)*100).toFixed(1)+'¢':money(v);
+const pct=v=>(v*100).toFixed(1)+'%';
+const nfmt=v=>blank(v)?'':String(+num(v).toFixed(3));
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const val=v=>blank(v)?'':esc(v);
+
+/* ---------- sound ---------- */
+let AC=null,lastTick=0,lastKey=0;
+function ac(){if(!AC){const C=window.AudioContext||window.webkitAudioContext;if(!C)return null;try{AC=new C();}catch(e){return null;}}if(AC.state==='suspended')AC.resume().catch(()=>{});return AC;}
+function tone(freq,dur,o={}){
+  if(S&&S.sound===false)return;const a=ac();if(!a||a.state!=='running')return;
+  const t=a.currentTime+(o.delay||0),osc=a.createOscillator(),g=a.createGain();
+  osc.type=o.type||'sine';osc.frequency.setValueAtTime(freq,t);if(o.to)osc.frequency.exponentialRampToValueAtTime(o.to,t+dur);
+  g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(o.vol||.06,t+.006);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  osc.connect(g);g.connect(a.destination);osc.start(t);osc.stop(t+dur+.03);
+}
+const SFX={
+  tap:()=>tone(1150,.05,{vol:.055,to:780}),
+  nav:()=>{tone(660,.06,{vol:.045});tone(990,.08,{vol:.045,delay:.05});},
+  up:()=>tone(680,.08,{type:'triangle',vol:.07,to:1080}),
+  down:()=>tone(1080,.08,{type:'triangle',vol:.07,to:680}),
+  tick:p=>{const n=performance.now();if(n-lastTick<28)return;lastTick=n;tone(420+Math.max(0,Math.min(1,p))*1100,.022,{type:'square',vol:.016});},
+  key:()=>{const n=performance.now();if(n-lastKey<22)return;lastKey=n;tone(1700+Math.random()*500,.016,{type:'square',vol:.011});},
+  check:()=>{tone(880,.07,{type:'triangle',vol:.065});tone(1320,.11,{type:'triangle',vol:.055,delay:.06});},
+  uncheck:()=>tone(560,.09,{type:'triangle',vol:.05,to:400}),
+  add:()=>{tone(523,.07,{vol:.055});tone(784,.11,{vol:.055,delay:.06});},
+  del:()=>tone(260,.16,{type:'triangle',vol:.08,to:120}),
+  open:()=>tone(420,.13,{vol:.045,to:860}),
+  close:()=>tone(860,.11,{vol:.04,to:420}),
+  chime:()=>[784,988,1319].forEach((f,i)=>tone(f,.24,{vol:.045,delay:i*.07})),
+  toggle:on=>tone(on?920:580,.07,{type:'triangle',vol:.06}),
+};
+['pointerdown','keydown','touchstart'].forEach(ev=>document.addEventListener(ev,()=>ac(),{passive:true}));
+
+
+/* ---------- render ---------- */
+const $=s=>document.querySelector(s);
+let OPEN=null;const CHECK=new Set();
+const TABS={profit:'Calculator',recipe:'Recipe',pack:'Packaging',orders:'Orders'};
+const QCHIPS=[1,2,6,12,24];
+const ms=(n,cls='',fill)=>`<span class="ms ${cls}"${fill?` style="font-variation-settings:'FILL' 1"`:''} aria-hidden="true">${n}</span>`;
+function unitOpts(sel){return Object.keys(UNITS).map(u=>`<option${u===sel?' selected':''}>${u}</option>`).join('');}
+function muOpts(sel){return MU.map(([k,l])=>`<option value="${k}"${k===sel?' selected':''}>${l}</option>`).join('');}
+const tile=(ic,lab,k,ks,tone='')=>`<div class="tile ${tone}"><div class="tile-h">${ms(ic,'sm')}<span class="caps">${lab}</span></div><div class="tile-v"><span class="title b num" data-o="${k}"></span></div><span class="tiny" data-o="${ks}"></span></div>`;
+const numIn=(b,v,ph)=>`<input type="number" inputmode="decimal" step="any" min="0" data-b="${b}" value="${val(v)}"${ph?` placeholder="${ph}"`:''}>`;
+function gl(label,b,v,o={}){
+  return `<label class="gl-row"><span class="callout">${label}</span><span class="gl-in${o.pre?' pre':''}${o.text?' wide-in':''}">${o.pre?'<i>$</i>':''}${o.text?`<input data-b="${b}" value="${val(v)}" placeholder="${o.ph||''}">`:numIn(b,v,o.ph)}</span></label>`;
+}
+
+function render(){
+  if(!TABS[S.tab])S.tab='profit';
+  document.body.dataset.tab=S.tab;
+  if(S.active>=S.recipes.length)S.active=0;
+  $('#title').textContent=TABS[S.tab];
+  document.querySelectorAll('[data-tab]').forEach(a=>{const on=a.dataset.tab===S.tab;a.classList.toggle('on',on);on?a.setAttribute('aria-current','page'):a.removeAttribute('aria-current');});
+  $('#incCosts').checked=S.incCosts!==false;$('#soundOn').checked=S.sound!==false;
+  $('#main').innerHTML=(S.tab==='pack'?'':pillsHTML())+({profit:profitHTML,recipe:recipeHTML,pack:packHTML,orders:ordersHTML}[S.tab])();
+  update();
+}
+function pillsHTML(){
+  return `<section class="pills-wrap" aria-label="Recipes"><div class="pills">${S.recipes.map((x,i)=>`<button class="pill${i===S.active?' on':''}" data-a="sel:${i}">${i===S.active?ms('restaurant','',1):''}<span class="t" data-o="pill-${i}"></span></button>`).join('')}<button class="pill add" data-a="addRecipe" aria-label="New recipe">${ms('add')}</button></div></section>`;
+}
+function profitHTML(){
+  return `
+  <section class="card hero" aria-label="Price">
+    <div class="hero-top">
+      <div class="hero-l"><span class="caps muted" data-o="h-lab"></span><div class="metric-row"><span class="metric num" data-o="h-price"></span><span class="title muted">each</span></div><span class="glow hero-pf" data-o="h-pf"></span></div>
+      <div class="stepper"><button data-a="step:-1" aria-label="Lower price">${ms('remove')}</button><button data-a="step:1" aria-label="Raise price">${ms('add')}</button></div>
+    </div>
+    <input type="range" class="range" data-s="price" min="0" step="0.05" aria-label="Price each">
+    <div class="qty-box" data-tour="qty">
+      <div class="qty-top"><span class="qty-l"><span class="caps muted">Order</span><span class="foot muted" data-o="q-tot"></span></span>
+        <div class="stepper sm"><button data-a="qty:-1" aria-label="One fewer">${ms('remove')}</button><span class="qty-v num" data-o="q-v"></span><button data-a="qty:1" aria-label="One more">${ms('add')}</button></div></div>
+      <div class="seg full" role="group" aria-label="Quick quantities">${QCHIPS.map(n=>`<button data-a="qset:${n}" data-q="${n}">×${n}</button>`).join('')}</div>
+    </div>
+  </section>
+  <section class="card time-card" aria-label="Time per batch">
+    <div class="time-top"><span class="time-ic tn-sky">${ms('timer','sm')}</span><span class="time-l"><span class="bodyE sm">Time per batch</span><span class="foot muted">You earn <b class="num pay" data-o="tm-hr"></b></span></span><span class="time-v num" data-o="tm-v"></span></div>
+    <input type="range" class="range sm" data-s="min" min="5" step="1" aria-label="Minutes per batch">
+  </section>
+  <section class="tiles two" aria-label="Costs">${tile('payments','Order cost','t-cost','t-cost-s','tn-peach')}<div class="tile tn-sky"><div class="tile-h">${ms('restaurant','sm')}<span class="caps" data-o="t-cpc-l"></span></div><div class="tile-v"><span class="title b num" data-o="t-cpc"></span></div><span class="tiny" data-o="t-cpc-s"></span></div></section>
+  <section class="card"><div class="card-h"><h2 class="title">Where the Money Goes</h2></div><div class="bars" data-html="bars"></div></section>`;
+}
+function recipeHTML(){
+  const r=R();let ing='';
+  r.sections.forEach((s,si)=>{
+    ing+=`<div class="sec-h"><input class="sec-in" data-b="s:${si}:name" value="${val(s.name)}" aria-label="Section name"><button class="link" data-a="addItem:${si}">${ms('add','xs')}Add</button><button class="icon-sm" data-a="delSec:${si}" aria-label="Remove section">${ms('delete','sm')}</button></div><div class="rows">`;
+    s.items.forEach((it,ii)=>{const k=`${si}-${ii}`,key=`i:${si}:${ii}`,open=OPEN===key,p=`i:${si}:${ii}:`;
+      ing+=`<div class="item${open?' open':''}"><button class="row" data-a="exp:${key}" aria-expanded="${open}"><span class="row-l"><span class="chev">${ms('expand_more','sm')}</span><span><span class="blk bodyE" data-o="n-${k}"></span><span class="blk foot sub2"><span class="m-use" data-o="fm-${k}"></span><span class="sep">·</span><span class="m-buy" data-o="fp-${k}"></span></span></span></span><span class="row-r"><span class="blk bodyE num" data-o="cc-${k}"></span></span></button>
+      ${open?`<div class="editor">
+        <label class="fld wide"><span class="caps">Ingredient</span><input data-b="${p}name" value="${val(it.name)}" placeholder="Ingredient name"></label>
+        <div class="panel buy wide"><div class="panel-h">${ms('shopping_cart','xs')}What you buy</div><div class="panel-g">
+          <label class="fld"><span class="caps">Price</span><span class="pre"><i>$</i>${numIn(p+'price',it.price)}</span></label>
+          <label class="fld"><span class="caps">Size</span>${numIn(p+'size',it.size)}</label>
+          <label class="fld"><span class="caps">Unit</span><select data-b="${p}unit">${unitOpts(it.unit)}</select></label>
+        </div></div>
+        <div class="panel use wide"><div class="panel-h">${ms('scale','xs')}In your recipe</div><div class="panel-g">
+          <label class="fld"><span class="caps">Amount</span><input type="text" inputmode="decimal" autocomplete="off" data-b="${p}mq" value="${val(it.mq)}" placeholder="1"></label>
+          <label class="fld"><span class="caps">Unit</span><select data-b="${p}mu">${muOpts(it.mu)}</select></label>
+          <label class="fld"><span class="caps">Uses from package</span><span class="suf">${numIn(p+'amount',it.amount)}<i data-o="b-${k}"></i></span></label>
+        </div><span class="foot auto-hint" data-o="am-${k}"></span></div>
+        <div class="ed-foot wide"><span></span><button class="link danger" data-a="delItem:${si}:${ii}">${ms('delete','xs')}Remove</button></div>
+      </div>`:''}</div>`;});
+    ing+='</div>';
+  });
+  return `
+  <section class="card">
+    <div class="glist">
+      ${gl('Name','r:name',r.name,{text:true,ph:'Recipe name'})}
+      ${gl('Each batch makes','r:yield',r.yield)}
+      ${gl('What it makes','r:itemName',r.itemName,{text:true,ph:'servings'})}
+    </div>
+    <div class="btn-row"><button class="chip" data-a="dupRecipe">${ms('content_copy','xs')}Duplicate</button><button class="chip danger" data-a="delRecipe">${ms('delete','xs')}Delete</button></div>
+  </section>
+  <section class="card" data-tour="ingredients">
+    <div class="card-h"><div><h2 class="title">Ingredients</h2><p class="caps muted legend"><span class="m-use"><i></i>Recipe</span><span class="m-buy"><i></i>Bought</span><span>Tap to edit</span></p></div><button class="link" data-a="addSec">${ms('add','xs')}Section</button></div>
+    ${ing}
+    <div class="tot-line"><span class="foot muted">Ingredients per batch</span><b class="num" data-o="t-batch"></b></div>
+    <details class="conv"><summary class="foot">${ms('straighten','sm pri')}Measurement conversions</summary><div class="conv-grid">${CONV.map(c=>`<div><span>${c[0]}</span><b>${c[1]}</b></div>`).join('')}</div></details>
+  </section>
+  <section class="card"><div class="card-h"><h2 class="title">Notes</h2></div><textarea data-b="r:notes" placeholder="Steps, oven temp, serving notes. These print on the PDF and image.">${esc(r.notes)}</textarea></section>`;
+}
+function packHTML(){
+  const P=S.packaging,L=P.label;
+  const rows=P.items.map((it,i)=>{const key='p:'+i,open=OPEN===key,p=`p:${i}:`;
+    return `<div class="item${open?' open':''}"><button class="row" data-a="exp:${key}" aria-expanded="${open}"><span class="row-l"><span class="chev">${ms('expand_more','sm')}</span><span><span class="blk bodyE" data-o="pn-${i}"></span><span class="blk foot muted" data-o="pf-${i}"></span></span></span><span class="row-r"><span class="blk bodyE num" data-o="pk-${i}"></span></span></button>
+    ${open?`<div class="editor">
+      <label class="fld wide"><span class="caps">Item</span><input data-b="${p}name" value="${val(it.name)}" placeholder="Item name"></label>
+      <label class="fld"><span class="caps">Package price</span><span class="pre"><i>$</i>${numIn(p+'price',it.price)}</span></label>
+      <label class="fld"><span class="caps">Items in package</span>${numIn(p+'count',it.count)}</label>
+      <label class="fld"><span class="caps">Used per item</span>${numIn(p+'perItem',it.perItem)}</label>
+      <label class="fld"><span class="caps">Used per order</span>${numIn(p+'perOrder',it.perOrder)}</label>
+      <div class="ed-foot wide"><span class="foot muted">Per item: a bag or wrap for each one. Per order: a box or label for the whole order.</span><button class="link danger" data-a="delPk:${i}">${ms('delete','xs')}Remove</button></div>
+    </div>`:''}</div>`;}).join('');
+  return `
+  <section class="card hero"><div class="hero-top">
+    <div class="hero-l"><span class="caps muted">Packaging per order</span><div class="metric-row"><span class="metric num" data-o="pk-order"></span></div><span class="foot muted">plus <b class="num" data-o="pk-item"></b> for each item</span></div></div></section>
+  <section class="card" data-tour="packaging"><div class="card-h"><div><h2 class="title">Packaging Items</h2><p class="caps muted">Shared by all recipes · tap to edit</p></div><button class="link" data-a="addPk">${ms('add','xs')}Item</button></div><div class="rows">${rows}</div></section>
+  <section class="card"><div class="card-h"><h2 class="title">Printer Ink</h2></div>
+    <div class="glist">
+      ${gl('Ink cartridge price','l:inkPrice',L.inkPrice,{pre:true})}
+      ${gl('Pages per cartridge','l:pages',L.pages)}
+      ${gl('Labels per sheet','l:perSheet',L.perSheet,{ph:'add'})}
+      ${gl('Labels per item','l:perItem',L.perItem)}
+      ${gl('Labels per order','l:perOrder',L.perOrder)}
+    </div>
+    <p class="foot muted note" data-o="ink-note"></p>
+  </section>`;
+}
+function ordersHTML(){
+  return `
+  <section class="card hero" aria-label="Order size" data-tour="orderhero">
+    <div class="hero-top">
+      <div class="hero-l"><span class="caps muted">Ordered</span><div class="metric-row"><span class="metric num" data-o="o-q"></span><span class="title muted" data-o="o-noun"></span></div></div>
+      <div class="stepper"><button data-a="qty:-1" aria-label="One fewer">${ms('remove')}</button><button data-a="qty:1" aria-label="One more">${ms('add')}</button></div>
+    </div>
+    <input type="range" class="range" data-s="qty" min="1" step="1" aria-label="Quantity ordered">
+  </section>
+  <section class="tiles">${tile('blender','Batches','o-b','o-b-s','tn-lav')}${tile('timer','Time','o-h','o-h-s','tn-sky')}${tile('add_circle','Extras','o-x','o-x-s','tn-pink')}</section>
+  <section class="card"><div class="rows">${[['payments','Revenue','ot-rev'],['grocery','Ingredients','ot-ing'],['inventory_2','Packaging','ot-pk'],['savings','Profit','ot-pf'],['schedule','Pay per hour','ot-hr']].map(([ic,l,k],j)=>`<div class="row static${k==='ot-pf'?' hl':''}"><span class="row-l"><span class="dot-ic ${['tn-sky','tn-butter','tn-peach','tn-mint','tn-lav'][j]}">${ms(ic,'sm')}</span><span class="bodyE">${l}</span></span><span class="bodyE num${k==='ot-pf'?' glow':''}" data-o="${k}"></span></div>`).join('')}</div>
+  </section>
+  <section class="card"><div class="card-h"><h2 class="title">Shopping List</h2><button class="link" data-a="chkReset">${ms('checklist','xs')}Reset</button></div><div data-html="checklist"></div></section>`;
+}
+function checklistHTML(r,c){
+  const b=c.plan.batches;
+  if(!b)return '<p class="foot muted empty">Set how many were ordered to build the list.</p>';
+  let h='',ri=0;
+  r.sections.forEach((s,si)=>{let rows='';
+    s.items.forEach((it,ii)=>{const x=c.rows[ri++];if(!it.name&&blank(it.amount))return;const key=`${r.id}:${si}:${ii}`,on=CHECK.has(key);
+      const q=parseQty(it.mq);const meas=q!=null?`${kitchenNum(q*b,FRAC_U.includes(it.mu))} ${muWord(it.mu,q*b)}`:'';
+      rows+=`<button class="row${on?' done':''}" data-a="chk:${key}"><span class="row-l"><span class="check${on?' on':''}">${ms('check','xs')}</span><span><span class="blk bodyE">${esc(it.name||'Unnamed')}</span><span class="blk foot muted">${esc(meas||'—')}${b>1?` · ${b} batches`:''}</span></span></span><span class="row-r"><span class="blk bodyE num">${blank(it.amount)?'—':nfmt(num(it.amount)*b)+' '+esc(unitLabel(num(it.amount)*b,x.base,it.name))}</span><span class="badge soft">${money(x.cb*b)}</span></span></button>`;});
+    if(rows)h+=`<div class="sec-h static"><span class="caps pri">${esc(s.name)}</span></div><div class="rows">${rows}</div>`;
+  });
+  const pk=c.pk,q=c.q;let prow='';
+  pk.items.forEach((it,i)=>{const need=num(it.perItem)*q+num(it.perOrder);if(!need)return;const key=`${r.id}:pk:${i}`,on=CHECK.has(key);
+    prow+=`<button class="row${on?' done':''}" data-a="chk:${key}"><span class="row-l"><span class="check${on?' on':''}">${ms('check','xs')}</span><span><span class="blk bodyE">${esc(it.name||'Item')}</span><span class="blk foot muted">${[num(it.perItem)?`${nfmt(it.perItem)} per item`:'',num(it.perOrder)?`${nfmt(it.perOrder)} per order`:''].filter(Boolean).join(' + ')}</span></span></span><span class="row-r"><span class="blk bodyE num">${nfmt(need)}</span><span class="badge soft">${money(it.each*need)}</span></span></button>`;});
+  if(prow)h+=`<div class="sec-h static"><span class="caps pri">Packaging</span></div><div class="rows">${prow}</div>`;
+  return h;
+}
+
+/* ---------- live values ---------- */
+const priceStep=p=>p<5?0.25:p<20?0.5:1;
+function update(){
+  const o={};const r=R();
+  S.recipes.forEach((x,i)=>o['pill-'+i]=x.name||'Untitled');
+  if(S.tab==='pack'){
+    const pk=calcPack(),L=S.packaging.label;
+    pk.items.forEach((it,i)=>{o['pn-'+i]=it.name||'New item';
+      const use=[num(it.perItem)?`${nfmt(it.perItem)}/item`:'',num(it.perOrder)?`${nfmt(it.perOrder)}/order`:''].filter(Boolean).join(' + ')||'not used yet';
+      o['pf-'+i]=blank(it.price)||blank(it.count)?'Tap to add price':`${money(num(it.price))} for ${nfmt(it.count)} · ${use}`;o['pk-'+i]=cents(it.each);});
+    o['pk-order']=money(pk.perOrder);o['pk-item']=cents(pk.perItem);
+    o['ink-note']=num(L.perSheet)?`Ink costs ${cents(pk.ink)} a label.`:'Add labels per sheet to include ink. Page yield is on the ink box.';
+  }else{
+    const c=calc(r),x=c.order,q=c.q;
+    if(S.tab==='profit'){
+      o['h-lab']=`Price per ${sing(r)}`;o['h-price']=money(num(r.price));
+      o['h-pf']=[`Profit ${money(x.profit)}`,x.profit<0];
+      o['q-v']=String(q);o['q-tot']=`${q} ${noun(r,q)} · ${money(x.price)}`;
+      document.querySelectorAll('[data-q]').forEach(b=>{const on=+b.dataset.q===q;b.classList.toggle('on',on);b.innerHTML=(on?'<i></i>':'')+'×'+b.dataset.q;});
+      const mx=Math.max(5,Math.ceil(Math.max(num(r.price)*2,x.costEach*4)));
+      const rg=document.querySelector('[data-s=price]');if(rg){rg.max=mx;if(document.activeElement!==rg)rg.value=num(r.price);}
+      o['tm-v']=`${nfmt(r.minutes)||0} min`;o['tm-hr']=[`${money(c.hourly)}/hour`,c.hourly<0];const tmx=Math.max(180,Math.ceil(num(r.minutes)));
+      const tr=document.querySelector('[data-s=min]');if(tr){tr.max=tmx;if(document.activeElement!==tr)tr.value=num(r.minutes);}
+      o['t-cost']=money(x.total);o['t-cost-s']=`${money(x.ing)} + ${money(x.pkg)} packaging`;
+      o['t-cpc-l']=`Cost per ${sing(r)}`;o['t-cpc']=cents(x.costEach);o['t-cpc-s']=`${cents(c.each)} + ${cents(x.pkg/q)} packaging`;
+      const bars=c.rows.filter(z=>z.cc>0).map(z=>({n:z.name||'Unnamed',v:z.cc,pk:false}));
+      if(x.pkg>0)bars.push({n:'Packaging',v:x.pkg/q,pk:true});
+      bars.sort((a,b)=>b.v-a.v);const max=bars.length?bars[0].v:1;const el=document.querySelector('[data-html=bars]');
+      const BC=['#c4b5fd','#f9a8d4','#93c5fd','#86efac','#fde68a','#fdba74'];
+      if(el)el.innerHTML=bars.length?`<p class="caps muted bars-cap">Cost per ${esc(sing(r))}, biggest first</p>`+bars.map((b,bi)=>`<div class="bar-row"><span class="n" title="${esc(b.n)}">${esc(b.n)}</span><div class="bar-track"><div class="bar-fill${b.pk?' pk':''}" style="width:${Math.max(2,b.v/max*100)}%${b.pk?'':`;background:${BC[bi%BC.length]}`}"></div></div><span class="v">${cents(b.v)}</span></div>`).join(''):'<p class="foot muted empty">Add ingredient prices and amounts to see the breakdown.</p>';
+    }else if(S.tab==='recipe'){
+      c.rows.forEach(z=>{const k=`${z.si}-${z.ii}`,it=r.sections[z.si].items[z.ii];
+        o['n-'+k]=it.name||'New ingredient';
+        {const ml=measureLine(it);o['fm-'+k]=!ml?'no amount':ml.eq?`${ml.m} = ${ml.eq}`:ml.m;}
+        o['fp-'+k]=blank(it.price)?'no price yet':`${money(num(it.price))} / ${nfmt(it.size)||'?'} ${it.unit}`;
+        o['cc-'+k]=cents(z.cc);o['b-'+k]=unitLabel(num(it.amount),z.base,it.name);
+        if(OPEN===`i:${z.si}:${z.ii}`){const qv=parseQty(it.mq);const m=qv==null?null:convertQty(qv,it.mu,it.name,it.unit);
+          o['am-'+k]=String(it.mq||'').trim()===''?['Type an amount and pick a unit',false]:qv==null?['Use a number like 1.5 or 3/4',true]:m.v!=null?[`✓ ${measureText(it)} = ${nfmt(m.v)} ${unitLabel(m.v,m.base,it.name)}`,false]:m.why==='dens'?['No cup weight for this one. Type what it uses.',true]:['Those units don\'t convert. Type what it uses.',true];}});
+      o['t-batch']=money(c.batch);
+    }else if(S.tab==='orders'){
+      const p=c.plan;
+      o['o-q']=String(q);o['o-noun']=noun(r,q);
+      const mx=Math.max(60,q);const rg=document.querySelector('[data-s=qty]');if(rg){rg.max=mx;if(document.activeElement!==rg)rg.value=q;}
+      o['o-b']=String(p.batches);o['o-b-s']=`${num(r.yield)} ${noun(r,num(r.yield))} each`;
+      o['o-h']=p.hours>=1?`${Math.floor(p.hours)}h ${Math.round((p.hours%1)*60)}m`:`${Math.round(p.hours*60)} min`;o['o-h-s']=`${num(r.minutes)} min per batch`;
+      o['o-x']=String(p.leftover);o['o-x-s']=`${noun(r,p.leftover)} left over`;
+      o['ot-rev']=money(p.revenue);o['ot-ing']=money(p.ingredients);o['ot-pk']=money(p.packaging);o['ot-pf']=[money(p.profit),p.profit<0];o['ot-hr']=money(p.hours?p.profit/p.hours:0);
+      const el=document.querySelector('[data-html=checklist]');if(el)el.innerHTML=checklistHTML(r,c);
+    }
+  }
+  document.querySelectorAll('[data-o]').forEach(el=>{const k=el.dataset.o;if(k in o){const v=o[k];if(Array.isArray(v)){el.textContent=v[0];el.classList.toggle('neg',!!v[1]);}else el.textContent=v;}});
+}
+
+/* ---------- events ---------- */
+function setBound(el){
+  const parts=el.dataset.b.split(':');const isNum=el.type==='number';
+  const v=isNum?(el.value===''?null:Number(el.value)):el.value;const r=R();
+  switch(parts[0]){
+    case 'r':r[parts[1]]=v;break;
+    case 's':r.sections[+parts[1]].name=v;break;
+    case 'i':{const si=+parts[1],ii=+parts[2],f=parts[3];r.sections[si].items[ii][f]=v;
+      if(f==='mq'||f==='mu'||f==='unit')autoAmount(si,ii);else if(f==='amount')autoQty(si,ii);break;}
+    case 'p':S.packaging.items[+parts[1]][parts[2]]=v;break;
+    case 'l':S.packaging.label[parts[1]]=v;break;
+  }
+  save();update();
+}
+const newRecipe=()=>({id:id(),name:'New Recipe',yield:12,itemName:'servings',price:2,minutes:45,qty:1,notes:'',sections:[{name:'Ingredients',items:[newItem()]}]});
+function openSheet(on){$('#sheet').classList.toggle('on',on);$('#scrim').classList.toggle('on',on);$('#sheet').setAttribute('aria-hidden',on?'false':'true');}
+function setQty(n){R().qty=Math.max(1,Math.round(n));save();update();}
+
+document.addEventListener('input',e=>{
+  const t=e.target;if(!t.dataset)return;
+  if(t.dataset.b){if(t.tagName!=='SELECT')SFX.key();setBound(t);if(/^r:(itemName|name)$/.test(t.dataset.b)){}return;}
+  if(t.dataset.s){const mn=+t.min,mx=+t.max;SFX.tick(mx>mn?(+t.value-mn)/(mx-mn):.5);}
+  if(t.dataset.s==='price'){R().price=Math.round(+t.value*100)/100;save();update();}
+  else if(t.dataset.s==='qty'){setQty(+t.value);}
+  else if(t.dataset.s==='min'){R().minutes=+t.value;save();update();}
+});
+document.addEventListener('change',e=>{
+  const t=e.target;
+  if(t.tagName==='SELECT'&&t.dataset.b){SFX.tap();setBound(t);return;}
+  if(t.id==='soundOn'){S.sound=t.checked;save();if(t.checked)SFX.toggle(true);return;}
+  if(t.id==='incCosts'){SFX.toggle(t.checked);S.incCosts=t.checked;save();}
+});
+
+let TI=-1,tourTimer,TOKEN=0,SNAP=null,AUTO=true,advTimer;
+const sleep=(ms,tok)=>new Promise((res,rej)=>setTimeout(()=>tok===TOKEN?res():rej('stop'),ms));
+const q=sel=>typeof sel==='string'?document.querySelector(sel):sel;
+function fingerShow(on){$('#tourFinger').classList.toggle('on',on);}
+function fingerXY(x,y,ms){const f=$('#tourFinger');f.style.transitionDuration=ms+'ms';f.style.transform=`translate(${x-17}px,${y-17}px)`;fingerShow(true);}
+async function fingerTo(sel,tok,ms=650,fx=.5,fy=.5){const el=q(sel);if(!el)return;const r=el.getBoundingClientRect();fingerXY(r.left+r.width*fx,r.top+r.height*fy,ms);await sleep(ms+90,tok);}
+async function tap(tok){const f=$('#tourFinger');f.classList.remove('tap');void f.offsetWidth;f.classList.add('tap');await sleep(300,tok);}
+async function tapClick(sel,tok){await fingerTo(sel,tok);await tap(tok);const el=q(sel);if(el)el.click();tourPlace();await sleep(250,tok);}
+function thumbXY(el){const r=el.getBoundingClientRect(),mn=+el.min,mx=+el.max,v=+el.value;return [r.left+11+(mx>mn?(v-mn)/(mx-mn):0)*(r.width-22),r.top+r.height/2];}
+async function drag(sel,to,tok,steps=22){const el=q(sel);if(!el)return;const [x0,y0]=thumbXY(el);fingerXY(x0,y0,600);await sleep(700,tok);await tap(tok);const from=+el.value;
+  for(let i=1;i<=steps;i++){const e2=q(sel);if(!e2)return;e2.value=from+(to-from)*i/steps;e2.dispatchEvent(new Event('input',{bubbles:true}));const [x,y]=thumbXY(e2);fingerXY(x,y,50);await sleep(60,tok);}}
+async function typeInto(sel,text,tok){await fingerTo(sel,tok);await tap(tok);const el=q(sel);if(!el)return;el.classList.add('demo-focus');el.value='';setBound(el);await sleep(250,tok);
+  for(let i=1;i<=text.length;i++){const pre=text.slice(0,i);if(!/\.$/.test(pre)){el.value=pre;setBound(el);}SFX.key();await sleep(190,tok);}await sleep(400,tok);el.classList.remove('demo-focus');}
+
+async function pickSelect(sel,value,tok){await fingerTo(sel,tok);await tap(tok);const el=q(sel);if(!el)return;el.classList.add('demo-focus');await sleep(500,tok);el.value=value;SFX.tap();setBound(el);await sleep(700,tok);el.classList.remove('demo-focus');}
+const TOUR=[
+  {tab:'profit',sel:'.brand',t:'Welcome to Batch',d:'Price any recipe: what it costs to make, what to charge, and what you earn. Sit back and this tour plays itself. Tap pause anytime.',dur:7000},
+  {tab:'profit',sel:'.pills',t:'Your recipes',d:'Tap a recipe to switch to it. The + adds a new one.',dur:7500,
+    demo:async tok=>{if(S.recipes.length<2)return;await tapClick('.pill:nth-child(2)',tok);await sleep(1500,tok);await tapClick('.pill:nth-child(1)',tok);}},
+  {tab:'profit',sel:'.hero .hero-top',t:'Set your price',d:'Drag the slider or tap − and + to set the price for one. The green box shows your profit on the order.',dur:11000,
+    demo:async tok=>{const v=+q('[data-s=price]').value;await drag('[data-s=price]',v+2,tok);await sleep(900,tok);await drag('[data-s=price]',v,tok);await sleep(400,tok);await tapClick('[data-a="step:1"]',tok);}},
+  {tab:'profit',sel:'[data-tour=qty]',t:'How many?',d:'Set the order size with − and +, or tap a quick amount. Everything multiplies from the price of one.',dur:9500,
+    demo:async tok=>{await tapClick('[data-a="qset:6"]',tok);await sleep(900,tok);await tapClick('[data-a="qset:24"]',tok);await sleep(900,tok);await tapClick('[data-a="qty:1"]',tok);await sleep(300,tok);await tap(tok);q('[data-a="qty:1"]').click();}},
+  {tab:'profit',sel:'.time-card',t:'Time per batch',d:'Slide to match how long a batch takes you. Your hourly pay updates as you go.',dur:9000,
+    demo:async tok=>{const v=+q('[data-s=min]').value;await drag('[data-s=min]',v+25,tok);await sleep(900,tok);await drag('[data-s=min]',v,tok);}},
+  {tab:'profit',sel:'.tiles',t:'Your costs',d:'What the whole order costs you, and what each one costs with its packaging.',dur:7000},
+  {tab:'recipe',sel:'[data-tour=ingredients] .item',t:'Your ingredients',d:'Tap an ingredient, type an amount, and pick a unit like cups or tbsp. What it uses from the package fills itself in.',dur:13000,
+    demo:async tok=>{await tapClick('[data-a="exp:i:0:0"]',tok);await sleep(500,tok);await typeInto('[data-b="i:0:0:mq"]','1.5',tok);await sleep(700,tok);await pickSelect('[data-b="i:0:0:mu"]','tbsp',tok);await sleep(700,tok);await pickSelect('[data-b="i:0:0:mu"]','cup',tok);}},
+  {tab:'pack',sel:'[data-tour=packaging] .rows',t:'Packaging',d:'Boxes, bags, labels and ink. Set what each item uses and what each order uses. Shared by every recipe.',dur:9500,
+    demo:async tok=>{await tapClick('[data-a="exp:p:0"]',tok);await sleep(500,tok);await typeInto('[data-b="p:0:price"]','35',tok);}},
+  {tab:'orders',sel:'[data-tour=orderhero]',t:'Plan an order',d:'See how many batches to make, how long it takes, your profit, and a shopping list scaled to the order.',dur:9000,
+    demo:async tok=>{await tapClick('[data-a="qty:1"]',tok);await sleep(400,tok);await tap(tok);q('[data-a="qty:1"]').click();await sleep(700,tok);const v=+q('[data-s=qty]').value;await drag('[data-s=qty]',v+18,tok);}},
+  {tab:'profit',sel:'[data-a=sheet]',t:'Share & export',d:'Save a recipe as a picture for your photos, make PDFs, export to Excel, or change settings.',dur:7000,
+    demo:async tok=>{await fingerTo('[data-a=sheet]',tok);await tap(tok);await sleep(700,tok);await tap(tok);}},
+  {tab:'profit',sel:'[data-tour=help]',t:'Replay anytime',d:'Tap here to watch this tour again. Happy cooking!',dur:0,
+    demo:async tok=>{await fingerTo('[data-tour=help]',tok);await tap(tok);}}
+];
+function tourStart(){openSheet(false);SNAP=JSON.stringify(S);DEMO=true;AUTO=!matchMedia('(prefers-reduced-motion: reduce)').matches;TI=0;$('#tour').hidden=false;tourShow();}
+function tourEnd(){TOKEN++;clearTimeout(advTimer);fingerShow(false);if(SNAP){S=JSON.parse(SNAP);}OPEN=null;DEMO=false;TI=-1;$('#tour').hidden=true;try{localStorage.setItem(TOURKEY,'1');}catch(e){}save();render();}
+function tourGo(d){const n=TI+d;if(n<0)return;if(n>=TOUR.length){tourEnd();return;}TI=n;tourShow();}
+function setPlayIcon(){$('#tourPlay').innerHTML=`<span class="ms" aria-hidden="true">${AUTO?'pause':'play_arrow'}</span>`;$('#tourPlay').setAttribute('aria-label',AUTO?'Pause autoplay':'Play automatically');}
+function startTimer(tok){
+  const st=TOUR[TI],bar=$('#tourBar');clearTimeout(advTimer);bar.style.transition='none';bar.style.width='0';void bar.offsetWidth;
+  if(AUTO&&st.dur&&TI<TOUR.length-1){bar.style.transition=`width ${st.dur}ms linear`;bar.style.width='100%';advTimer=setTimeout(()=>{if(tok===TOKEN&&AUTO)tourGo(1);},st.dur);}
+  else if(TI===TOUR.length-1){bar.style.width='100%';}
+}
+function tourShow(){
+  const tok=++TOKEN;clearTimeout(advTimer);fingerShow(false);
+  const st=TOUR[TI],tabChanged=S.tab!==st.tab;
+  S=JSON.parse(SNAP);S.tab=st.tab;OPEN=null;render();if(tabChanged)window.scrollTo(0,0);
+  $('#tourStep').textContent=`Step ${TI+1} of ${TOUR.length}`;$('#tourTitle').textContent=st.t;$('#tourText').textContent=st.d;$('#tourLive').hidden=!st.demo;
+  $('#tourDots').innerHTML=TOUR.map((_,i)=>`<i class="${i===TI?'on':''}"></i>`).join('');
+  $('#tourPrev').disabled=TI===0;$('#tourNext').textContent=TI===TOUR.length-1?'Done':'Next';setPlayIcon();
+  const el=document.querySelector(st.sel);
+  if(el&&!el.closest('header,nav')){const r=el.getBoundingClientRect();if(r.top<72||r.bottom>innerHeight-220){window.scrollTo({top:Math.max(0,scrollY+r.top-90),behavior:'smooth'});}}
+  tourPlace();clearTimeout(tourTimer);tourTimer=setTimeout(tourPlace,450);
+  startTimer(tok);
+  if(st.demo)(async()=>{try{await sleep(1100,tok);for(;;){await st.demo(tok);tourPlace();await sleep(1500,tok);fingerShow(false);S=JSON.parse(SNAP);S.tab=st.tab;OPEN=null;render();tourPlace();await sleep(1000,tok);}}catch(e){}})();
+}
+function tourPlace(){
+  if(TI<0)return;const el=document.querySelector(TOUR[TI].sel);const spot=$('.tour-spot'),card=$('.tour-card');const pad=6,gap=12;
+  const cw=Math.min(340,innerWidth-32);card.style.width=cw+'px';const ch=card.offsetHeight;
+  if(!el){spot.style.cssText='top:50%;left:50%;width:0;height:0';card.style.left=(innerWidth-cw)/2+'px';card.style.top=(innerHeight-ch)/2+'px';return;}
+  const r=el.getBoundingClientRect();
+  spot.style.top=(r.top-pad)+'px';spot.style.left=(r.left-pad)+'px';spot.style.width=(r.width+pad*2)+'px';spot.style.height=(r.height+pad*2)+'px';
+  const left=Math.min(Math.max(16,r.left+r.width/2-cw/2),innerWidth-cw-16);let top;
+  if(r.bottom+pad+gap+ch<innerHeight-12)top=r.bottom+pad+gap;
+  else if(r.top-pad-gap-ch>12)top=r.top-pad-gap-ch;
+  else top=innerHeight-ch-16;
+  card.style.left=left+'px';card.style.top=top+'px';
+}
+window.addEventListener('resize',tourPlace);
+window.addEventListener('scroll',()=>{if(TI>=0)tourPlace();},{passive:true});
+document.addEventListener('keydown',e=>{
+  if(TI>=0){if(e.key==='Escape')tourEnd();else if(e.key==='ArrowRight')tourGo(1);else if(e.key==='ArrowLeft')tourGo(-1);else if(e.key===' '){e.preventDefault();q('#tourPlay').click();}return;}
+  if(e.key==='Escape')openSheet(false);
+});
+
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-a]');if(!b)return;
+  const raw=b.dataset.a,ix=raw.indexOf(':'),a=ix<0?raw:raw.slice(0,ix),rest=ix<0?'':raw.slice(ix+1),[x,y]=rest.split(':');
+  const r=R();
+  ({sel:SFX.tap,tab:SFX.nav,qset:SFX.tap,exp:()=>(OPEN===rest?SFX.close:SFX.open)(),chk:()=>(CHECK.has(rest)?SFX.uncheck:SFX.check)(),chkReset:SFX.down,
+    step:()=>(+x>0?SFX.up:SFX.down)(),qty:()=>(+x>0?SFX.up:SFX.down)(),addRecipe:SFX.add,dupRecipe:SFX.add,addItem:SFX.add,addSec:SFX.add,addPk:SFX.add,delItem:SFX.del,delPk:SFX.del,
+    sheet:SFX.open,closeSheet:SFX.close,imgOne:SFX.chime,pdfOne:SFX.chime,pdfAll:SFX.chime,xlsx:SFX.chime,import:SFX.tap,
+    tour:SFX.nav,tourNext:SFX.nav,tourPrev:SFX.nav,tourEnd:SFX.close,tourAuto:()=>SFX.toggle(!AUTO)}[a]||(()=>{}))();
+  switch(a){
+    case 'sel':S.active=+x;OPEN=null;break;
+    case 'tab':S.tab=x;OPEN=null;window.scrollTo(0,0);break;
+    case 'step':{const p=num(r.price),st=priceStep(+x>0?p:Math.max(0,p-0.01));r.price=Math.max(0,Math.round((p+(+x)*st)*100)/100);save();update();return;}
+    case 'qty':setQty(qtyOf(r)+(+x));return;
+    case 'qset':setQty(+x);return;
+    case 'exp':OPEN=OPEN===rest?null:rest;break;
+    case 'chk':CHECK.has(rest)?CHECK.delete(rest):CHECK.add(rest);update();return;
+    case 'chkReset':CHECK.clear();update();return;
+    case 'addRecipe':S.recipes.push(newRecipe());S.active=S.recipes.length-1;S.tab='recipe';OPEN=null;save();render();window.scrollTo(0,0);{const t=document.querySelector('[data-b="r:name"]');if(t){t.focus();t.select();}}return;
+    case 'dupRecipe':{const c=JSON.parse(JSON.stringify(r));c.id=id();c.name=(r.name||'Recipe')+' (copy)';S.recipes.splice(S.active+1,0,c);S.active++;OPEN=null;toast('Recipe duplicated');break;}
+    case 'delRecipe':if(!confirm(`Delete "${r.name||'this recipe'}"? This can't be undone.`))return;SFX.del();S.recipes.splice(S.active,1);if(!S.recipes.length)S.recipes.push(newRecipe());S.active=Math.max(0,S.active-1);OPEN=null;break;
+    case 'addItem':r.sections[+x].items.push(newItem());OPEN=`i:${x}:${r.sections[+x].items.length-1}`;save();render();document.querySelector(`[data-b="i:${x}:${r.sections[+x].items.length-1}:name"]`)?.focus();return;
+    case 'delItem':r.sections[+x].items.splice(+y,1);OPEN=null;break;
+    case 'addSec':r.sections.push({name:'New section',items:[newItem()]});OPEN=`i:${r.sections.length-1}:0`;break;
+    case 'delSec':if(r.sections[+x].items.some(i=>i.name)&&!confirm('Remove this section and its ingredients?'))return;SFX.del();r.sections.splice(+x,1);OPEN=null;break;
+    case 'addPk':S.packaging.items.push({name:'',price:null,count:null,perItem:0,perOrder:1});OPEN='p:'+(S.packaging.items.length-1);save();render();document.querySelector(`[data-b="p:${S.packaging.items.length-1}:name"]`)?.focus();return;
+    case 'delPk':S.packaging.items.splice(+x,1);OPEN=null;break;
+    case 'tour':tourStart();return;
+    case 'tourEnd':tourEnd();return;
+    case 'tourNext':tourGo(1);return;
+    case 'tourPrev':tourGo(-1);return;
+    case 'tourAuto':AUTO=!AUTO;setPlayIcon();if(AUTO)startTimer(TOKEN);else{clearTimeout(advTimer);const bar=$('#tourBar');bar.style.width=getComputedStyle(bar).width;bar.style.transition='none';}return;
+    case 'sheet':openSheet(true);return;
+    case 'closeSheet':openSheet(false);return;
+    case 'imgOne':openSheet(false);exportImage(R());return;
+    case 'pdfOne':openSheet(false);exportPDF([r]);return;
+    case 'pdfAll':openSheet(false);exportPDF(S.recipes);return;
+    case 'xlsx':openSheet(false);exportXlsx();return;
+    case 'import':openSheet(false);$('#fileIn').click();return;
+    case 'reset':openSheet(false);if(!confirm('Replace everything with the sample recipes? Your changes will be lost.'))return;SFX.del();S=defaults();OPEN=null;break;
+    default:return;
+  }
+  save();render();
+});
+/* ---------- helpers ---------- */
+let tt;function toast(m,d){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),d||2600);}
+function download(blob,name){const u=URL.createObjectURL(blob);const a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1500);}
+const slug=s=>(String(s||'recipe').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'recipe');
+const pdfText=s=>String(s??'').replace(/[–—]/g,'-').replace(/[‘’]/g,"'").replace(/[“”]/g,'"').replace(/≈/g,'~').replace(/[^\x00-\xFF]/g,'');
+
+
+/* ---------- recipe image ---------- */
+function statList(r,c){
+  return [[`Cost per ${sing(r)}`,cents(c.order.costEach)],[`Price per ${sing(r)}`,money(num(r.price))],[`Profit per ${sing(r)}`,money(c.profitEach)],['Pay per hour',money(c.hourly)]];
+}
+function drawCard(r,inc){
+  const W=1080,P=72,c=calc(r),cv=document.createElement('canvas'),F="Inter,-apple-system,'Segoe UI',Roboto,sans-serif";
+  const PAS=['#c4b5fd','#f9a8d4','#fdba74','#86efac','#93c5fd'];
+  const draw=(ctx,go)=>{
+    let y=0;const T=(txt,x,yy,font,color,align)=>{if(!go)return;ctx.font=font;ctx.fillStyle=color;ctx.textAlign=align||'left';ctx.fillText(txt,x,yy);};
+    const wrap=(txt,font,maxW)=>{ctx.font=font;const out=[];String(txt).split('\n').forEach(par=>{let line='';par.split(/\s+/).forEach(w=>{const t=line?line+' '+w:w;if(ctx.measureText(t).width>maxW&&line){out.push(line);line=w;}else line=t;});out.push(line);});return out;};
+    const fit=(txt,font,maxW)=>{ctx.font=font;let t=String(txt);if(ctx.measureText(t).width<=maxW)return t;while(t.length>1&&ctx.measureText(t+'…').width>maxW)t=t.slice(0,-1);return t+'…';};
+    const rr=(x,yy,w,h,rad,stroke,fill)=>{if(!go)return;ctx.beginPath();if(ctx.roundRect)ctx.roundRect(x,yy,w,h,rad);else ctx.rect(x,yy,w,h);if(fill){ctx.fillStyle=fill;ctx.fill();}if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=2;ctx.stroke();}};
+    if(go){ctx.fillStyle='#000';ctx.fillRect(0,0,W,cv.height);const g=ctx.createLinearGradient(0,0,W,0);PAS.forEach((p,i)=>g.addColorStop(i/(PAS.length-1),p));ctx.fillStyle=g;ctx.fillRect(0,0,W,8);}
+    y=P+28;T('BATCH',P,y,`700 26px ${F}`,'#c4b5fd');T(new Date().toLocaleDateString(),W-P,y,`500 26px ${F}`,'#71717a','right');
+    y+=36;wrap(r.name||'Untitled recipe',`800 76px ${F}`,W-2*P).forEach(l=>{y+=84;T(l,P,y,`800 76px ${F}`,'#ffffff');});
+    y+=52;T(`Makes ${num(r.yield)} ${noun(r,num(r.yield))} · ${num(r.minutes)} min per batch`,P,y,`500 32px ${F}`,'#a1a1aa');
+    if(inc){
+      const st=statList(r,c).map((s2,i)=>[...s2,[PAS[4],PAS[0],PAS[3],PAS[2]][i]]);
+      y+=40;const bw=(W-2*P-24)/2,bh=128;
+      st.forEach((s2,i)=>{const x=P+(i%2)*(bw+24),yy=y+Math.floor(i/2)*(bh+24);rr(x,yy,bw,bh,24,s2[2]+'99',s2[2]+'12');T(fit(s2[0].toUpperCase(),`700 22px ${F}`,bw-56),x+28,yy+46,`700 22px ${F}`,s2[2]);T(s2[1],x+28,yy+100,`800 46px ${F}`,'#ffffff');});
+      y+=2*bh+24;
+    }
+    let ri=0;
+    r.sections.forEach(sec=>{
+      const rows=sec.items.map(it=>({it,x:c.rows[ri++]})).filter(o=>o.it.name||!blank(o.it.amount));if(!rows.length)return;
+      y+=72;T(String(sec.name||'').toUpperCase(),P,y,`700 26px ${F}`,'#c4b5fd');y+=18;if(go){ctx.fillStyle='rgba(196,181,253,.35)';ctx.fillRect(P,y,W-2*P,2);}
+      rows.forEach(({it,x})=>{
+        y+=62;const ml=measureLine(it);const mtxt=ml?(ml.eq?`${ml.m}  ·  ${ml.eq}`:ml.m):(blank(it.amount)?'':`${nfmt(it.amount)} ${unitLabel(num(it.amount),x.base,it.name)}`);
+        const rw=inc?190:0;
+        T(fit(it.name||'Ingredient',`600 36px ${F}`,W-2*P-rw-20),P,y,`600 36px ${F}`,'#ffffff');
+        if(inc)T(cents(x.cc),W-P,y,`700 34px ${F}`,'#fdba74','right');
+        if(mtxt){y+=42;T(fit(mtxt,`500 29px ${F}`,W-2*P-rw-20),P,y,`500 29px ${F}`,'#c4b5fd');if(inc)T(fit(`per ${sing(r)}`,`500 22px ${F}`,rw),W-P,y,`500 22px ${F}`,'#71717a','right');}
+        y+=22;if(go){ctx.fillStyle='rgba(255,255,255,.07)';ctx.fillRect(P,y,W-2*P,2);}
+      });
+    });
+    if(inc){y+=64;T('Ingredients per batch',P,y,`600 32px ${F}`,'#a1a1aa');T(money(c.batch),W-P,y,`800 38px ${F}`,'#ffffff','right');}
+    if((r.notes||'').trim()){
+      y+=86;T('NOTES',P,y,`700 26px ${F}`,'#f9a8d4');y+=10;
+      wrap(r.notes.trim(),`500 31px ${F}`,W-2*P).forEach(l=>{y+=46;T(l,P,y,`500 31px ${F}`,'#e4e4e7');});
+    }
+    y+=90;T('Made with Batch',W/2,y,`600 24px ${F}`,'#52525b','center');
+    return y+P-20;
+  };
+  const tmp=document.createElement('canvas').getContext('2d');const H=Math.ceil(draw(tmp,false));
+  cv.width=W;cv.height=H;const ctx=cv.getContext('2d');draw(ctx,true);return cv;
+}
+async function exportImage(r){
+  try{if(document.fonts&&document.fonts.ready)await document.fonts.ready;}catch(e){}
+  const cv=drawCard(r,S.incCosts!==false);
+  const blob=await new Promise(res=>cv.toBlob(res,'image/png'));if(!blob){toast("Couldn't make the image.");return;}
+  const file=new File([blob],slug(r.name)+'.png',{type:'image/png'});
+  if(navigator.canShare&&navigator.canShare({files:[file]})){
+    try{await navigator.share({files:[file],title:r.name||'Recipe'});return;}catch(e){if(e&&e.name==='AbortError')return;}
+  }
+  download(blob,file.name);toast('Image downloaded. Tap and hold it to save to Photos.',4000);
+}
+/* ---------- PDF ---------- */
+function exportPDF(list){
+  const inc=S.incCosts!==false;
+  const ok=window.jspdf&&window.jspdf.jsPDF;
+  if(!ok){printFallback(list,inc);return;}
+  const doc=new window.jspdf.jsPDF({unit:'pt',format:'letter'});
+  if(typeof doc.autoTable!=='function'){printFallback(list,inc);return;}
+  list.forEach((r,i)=>{if(i)doc.addPage();drawRecipe(doc,r,inc);});
+  const pages=doc.getNumberOfPages();const W=doc.internal.pageSize.getWidth(),H=doc.internal.pageSize.getHeight();
+  for(let p=1;p<=pages;p++){doc.setPage(p);doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(150,150,160);doc.text(`Page ${p} of ${pages}`,W-48,H-24,{align:'right'});doc.text(new Date().toLocaleDateString(),48,H-24);}
+  doc.save(list.length===1?slug(list[0].name)+'.pdf':'recipes.pdf');
+  toast('PDF downloaded');
+}
+function priceRows(r,c){const rows=[c.one];if(c.q>1)rows.push(c.order);return rows.map(o=>({label:`${o.n} ${noun(r,o.n)}`,...o}));}
+function drawRecipe(doc,r,inc){
+  const c=calc(r);const W=doc.internal.pageSize.getWidth(),H=doc.internal.pageSize.getHeight(),M=48;
+  const dark=[17,17,20],accent=[196,181,253],ink=[17,17,20],soft=[245,245,247],mut=[113,113,122];
+  doc.setFillColor(...accent);doc.rect(0,0,W,8,'F');
+  doc.setFont('helvetica','bold');doc.setFontSize(24);doc.setTextColor(...ink);
+  const title=doc.splitTextToSize(pdfText(r.name||'Untitled recipe'),W-2*M);doc.text(title,M,58);
+  let y=58+(title.length-1)*28+20;
+  doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(...mut);
+  doc.text(pdfText(`Makes ${num(r.yield)} ${noun(r,num(r.yield))} per batch   |   About ${num(r.minutes)} minutes per batch`),M,y);y+=18;
+  if(inc){
+    const stats=statList(r,c);const bw=(W-2*M-3*10)/4;
+    stats.forEach((s,i)=>{const x=M+i*(bw+10);doc.setFillColor(...soft);doc.roundedRect(x,y,bw,46,6,6,'F');doc.setFontSize(7.5);doc.setTextColor(...mut);doc.text(pdfText(s[0].toUpperCase()),x+10,y+16,{maxWidth:bw-16});doc.setFont('helvetica','bold');doc.setFontSize(14);doc.setTextColor(...ink);doc.text(pdfText(s[1]).replace('¢','c'),x+10,y+35);doc.setFont('helvetica','normal');});
+    y+=62;
+  }
+  const head=inc?[['Ingredient','Measure','Uses / batch','Cost / batch',`Cost / ${pdfText(sing(r))}`]]:[['Ingredient','Measure','Uses / batch']];
+  const cols=head[0].length;const body=[];let ri=0;
+  r.sections.forEach(s=>{
+    body.push([{content:pdfText(s.name),colSpan:cols,styles:{fillColor:soft,fontStyle:'bold',textColor:dark}}]);
+    s.items.forEach(it=>{const x=c.rows[ri++];if(!it.name&&blank(it.amount))return;
+      const row=[pdfText(it.name),pdfText(measureText(it)),blank(it.amount)?'':`${nfmt(it.amount)} ${pdfText(unitLabel(num(it.amount),x.base,it.name))}`];
+      if(inc)row.push(money(x.cb),money3(x.cc));body.push(row);});
+  });
+  if(inc)body.push([{content:'Total ingredients',colSpan:3,styles:{fontStyle:'bold'}},{content:money(c.batch),styles:{fontStyle:'bold'}},{content:money3(c.each),styles:{fontStyle:'bold'}}]);
+  const tbl={theme:'plain',margin:{left:M,right:M},styles:{font:'helvetica',fontSize:9.5,cellPadding:5,textColor:ink,lineColor:[228,228,231],lineWidth:{bottom:0.5}},headStyles:{fillColor:dark,textColor:255,fontStyle:'bold'}};
+  const right=inc?{2:{halign:'right'},3:{halign:'right'},4:{halign:'right'}}:{2:{halign:'right'}};
+  doc.autoTable({...tbl,startY:y,head,body,columnStyles:right});
+  y=doc.lastAutoTable.finalY+20;
+  if(inc){
+    doc.setFont('helvetica','bold');doc.setFontSize(14);doc.setTextColor(...ink);
+    if(y>H-160){doc.addPage();y=60;}
+    doc.text('Pricing & profit',M,y);y+=8;
+    doc.autoTable({...tbl,startY:y,head:[['Order','Price','Ingredients','Packaging','Total cost','Profit','Margin']],
+      body:priceRows(r,c).map(o=>[pdfText(o.label),money(o.price),money(o.ing),money(o.pkg),money(o.total),{content:money(o.profit),styles:{fontStyle:'bold',textColor:o.profit<0?[220,38,38]:[21,128,61]}},pct(o.margin)]),
+      columnStyles:{1:{halign:'right'},2:{halign:'right'},3:{halign:'right'},4:{halign:'right'},5:{halign:'right'},6:{halign:'right'}}});
+    y=doc.lastAutoTable.finalY+20;
+  }
+  if((r.notes||'').trim()){
+    if(y>H-100){doc.addPage();y=60;}
+    doc.setFont('helvetica','bold');doc.setFontSize(14);doc.setTextColor(...ink);doc.text('Method & notes',M,y);y+=16;
+    doc.setFont('helvetica','normal');doc.setFontSize(10);
+    doc.splitTextToSize(pdfText(r.notes),W-2*M).forEach(line=>{if(y>H-50){doc.addPage();y=60;}doc.text(line,M,y);y+=14;});
+  }
+}
+function printFallback(list,inc){
+  const h=list.map(r=>{const c=calc(r);let ri=0;
+    let rows='';r.sections.forEach(s=>{rows+=`<tr><td class="sec" colspan="${inc?5:3}">${esc(s.name)}</td></tr>`;s.items.forEach(it=>{const x=c.rows[ri++];if(!it.name&&blank(it.amount))return;rows+=`<tr><td>${esc(it.name)}</td><td>${esc(measureText(it))}</td><td>${blank(it.amount)?'':nfmt(it.amount)+' '+esc(unitLabel(num(it.amount),x.base,it.name))}</td>${inc?`<td>${money(x.cb)}</td><td>${money3(x.cc)}</td>`:''}</tr>`;});});
+    const pr=inc?`<h3>Pricing &amp; profit</h3><table><tr><th>Order</th><th>Price</th><th>Ingredients</th><th>Packaging</th><th>Total cost</th><th>Profit</th><th>Margin</th></tr>${priceRows(r,c).map(o=>`<tr><td>${esc(o.label)}</td><td>${money(o.price)}</td><td>${money(o.ing)}</td><td>${money(o.pkg)}</td><td>${money(o.total)}</td><td><b>${money(o.profit)}</b></td><td>${pct(o.margin)}</td></tr>`).join('')}</table>`:'';
+    return `<div class="pg"><h1>${esc(r.name)}</h1><div class="meta">Makes ${num(r.yield)} ${esc(noun(r,num(r.yield)))} per batch · About ${num(r.minutes)} minutes per batch</div><table><tr><th>Ingredient</th><th>Measure</th><th>Uses / batch</th>${inc?`<th>Cost / batch</th><th>Cost / ${esc(sing(r))}</th>`:''}</tr>${rows}</table>${pr}${(r.notes||'').trim()?`<h3>Method &amp; notes</h3><div class="notes">${esc(r.notes)}</div>`:''}</div>`;}).join('');
+  $('#printArea').innerHTML=h;toast('Choose "Save as PDF" in the print dialog');setTimeout(()=>window.print(),300);
+}
+
+/* ---------- Excel ---------- */
+function exportXlsx(){
+  if(!window.XLSX){toast('Excel export needs an internet connection the first time.');return;}
+  const X=window.XLSX;const wb=X.utils.book_new();
+  const M2='$#,##0.00',M3='$#,##0.000',P1='0.0%';
+  const cellSet=(ws,a,v,f,z)=>{if(f!==undefined&&f!==null){ws[a]={t:'n',v:typeof v==='number'&&isFinite(v)?v:0,f};}else if(typeof v==='number'){ws[a]={t:'n',v};}else if(blank(v)){return;}else{ws[a]={t:'s',v:String(v)};}if(z)ws[a].z=z;};
+  const pk=calcPack();const P=S.packaging,L=P.label;
+  const pw={};cellSet(pw,'A1','Packaging (shared by all recipes)');
+  ['Item','Package Price','Items in Package','Cost Each','Used per Item','Used per Order'].forEach((h,i)=>cellSet(pw,X.utils.encode_cell({r:2,c:i}),h));
+  const lh=[['Ink cartridge price',L.inkPrice,M2],['Pages per cartridge',L.pages],['Labels per printed sheet',L.perSheet]];
+  cellSet(pw,'H3','Printer ink helper');
+  lh.forEach((x,i)=>{cellSet(pw,'H'+(4+i),x[0]);cellSet(pw,'I'+(4+i),blank(x[1])?undefined:num(x[1]),null,x[2]);});
+  cellSet(pw,'H7','Ink per page');cellSet(pw,'I7',pk.page,'IFERROR(I4/I5,0)',M3);
+  cellSet(pw,'H8','Ink per label');cellSet(pw,'I8',pk.ink,'IFERROR(I7/I6,0)',M3);
+  let r=4;
+  pk.items.forEach(it=>{cellSet(pw,'A'+r,it.name);if(!blank(it.price))cellSet(pw,'B'+r,num(it.price),null,M2);if(!blank(it.count))cellSet(pw,'C'+r,num(it.count));cellSet(pw,'D'+r,it.each,`IFERROR(B${r}/C${r},0)`,M3);cellSet(pw,'E'+r,num(it.perItem));cellSet(pw,'F'+r,num(it.perOrder));r++;});
+  cellSet(pw,'A'+r,'Printer ink (per label)');cellSet(pw,'D'+r,pk.ink,'I8',M3);cellSet(pw,'E'+r,num(L.perItem));cellSet(pw,'F'+r,num(L.perOrder));
+  const pkLast=r;r++;
+  cellSet(pw,'A'+r,'Packaging totals');cellSet(pw,'E'+r,pk.perItem,`SUMPRODUCT(D4:D${pkLast},E4:E${pkLast})`,M3);cellSet(pw,'F'+r,pk.perOrder,`SUMPRODUCT(D4:D${pkLast},F4:F${pkLast})`,M2);
+  const pkTot=r;
+  pw['!ref']=`A1:I${Math.max(r,8)}`;pw['!cols']=[{wch:24},{wch:13},{wch:15},{wch:11},{wch:14},{wch:15},{wch:3},{wch:22},{wch:12}];
+  const used=new Set(['packaging','appdata']);
+  const sheetName=n=>{let b=String(n||'Recipe').replace(/[\[\]:*?\/\\]/g,'').slice(0,28).trim()||'Recipe';let s=b,i=2;while(used.has(s.toLowerCase())){s=`${b.slice(0,25)} ${i++}`;}used.add(s.toLowerCase());return s;};
+  const recipeSheets=[];
+  S.recipes.forEach(rec=>{
+    const c=calc(rec);const ws={};const one=sing(rec);
+    cellSet(ws,'A1',rec.name||'Recipe');
+    cellSet(ws,'A3',`${plural(rec).charAt(0).toUpperCase()+plural(rec).slice(1)} per batch`);cellSet(ws,'B3',num(rec.yield));
+    cellSet(ws,'A4',`Price per ${one}`);cellSet(ws,'B4',num(rec.price),null,M2);
+    cellSet(ws,'A5','Minutes per batch');cellSet(ws,'B5',num(rec.minutes));
+    cellSet(ws,'A6','Order quantity');cellSet(ws,'B6',c.q);
+    ['Ingredient','Package Price','Package Size','Package Unit','Cost per Unit','Unit','Recipe Measure','Uses per Batch','Cost per Batch',`Cost per ${one}`].forEach((h,i)=>cellSet(ws,X.utils.encode_cell({r:7,c:i}),h));
+    let row=10;const first=row;let ri=0;
+    rec.sections.forEach(s=>{cellSet(ws,'A'+row,s.name);row++;
+      s.items.forEach(it=>{const x=c.rows[ri++];
+        cellSet(ws,'A'+row,it.name);if(!blank(it.price))cellSet(ws,'B'+row,num(it.price),null,M2);if(!blank(it.size))cellSet(ws,'C'+row,num(it.size));cellSet(ws,'D'+row,it.unit);
+        cellSet(ws,'E'+row,x.cpu,`IFERROR(B${row}/(C${row}*IF(D${row}="lb",16,IF(D${row}="kg",1000,IF(D${row}="dozen",12,IF(D${row}="gallon",128,IF(D${row}="quart",32,IF(D${row}="liter",33.814,IF(D${row}="ml",1/29.5735,1)))))))),0)`,M3);
+        cellSet(ws,'F'+row,x.base);cellSet(ws,'G'+row,measureText(it));if(!blank(it.amount))cellSet(ws,'H'+row,num(it.amount));
+        cellSet(ws,'I'+row,x.cb,`E${row}*H${row}`,M3);cellSet(ws,'J'+row,x.cc,`IFERROR(I${row}/$B$3,0)`,M3);row++;});});
+    const last=row-1;
+    cellSet(ws,'A'+row,'TOTAL INGREDIENTS');cellSet(ws,'I'+row,c.batch,`SUM(I${first}:I${last})`,M2);cellSet(ws,'J'+row,c.each,`SUM(J${first}:J${last})`,M3);
+    const tot=row;row+=3;
+    cellSet(ws,'A'+row,'PRICING & PROFIT');row++;
+    ['Order','Quantity','Price','Ingredient Cost','Packaging','Total Cost','Profit','Margin'].forEach((h,i)=>cellSet(ws,X.utils.encode_cell({r:row-1,c:i}),h));
+    row++;const orow=[];
+    [['Just one',1,c.one],['Your order',c.q,c.order]].forEach(([lab,n,o],i)=>{const rr=row;orow.push(rr);
+      cellSet(ws,'A'+rr,lab);if(i===0)cellSet(ws,'B'+rr,1);else cellSet(ws,'B'+rr,n,'$B$6');
+      cellSet(ws,'C'+rr,o.price,`$B$4*B${rr}`,M2);cellSet(ws,'D'+rr,o.ing,`$J$${tot}*B${rr}`,M2);
+      cellSet(ws,'E'+rr,o.pkg,`Packaging!$E$${pkTot}*B${rr}+Packaging!$F$${pkTot}`,M2);
+      cellSet(ws,'F'+rr,o.total,`D${rr}+E${rr}`,M2);cellSet(ws,'G'+rr,o.profit,`C${rr}-F${rr}`,M2);cellSet(ws,'H'+rr,o.margin,`IFERROR(G${rr}/C${rr},0)`,P1);row++;});
+    row++;cellSet(ws,'A'+row,'YOUR PAY FOR YOUR TIME');row++;
+    cellSet(ws,'A'+row,`Profit per ${one} (on your order)`);cellSet(ws,'B'+row,c.profitEach,`G${orow[1]}/B${orow[1]}`,M2);row++;
+    cellSet(ws,'A'+row,'Profit per batch');cellSet(ws,'B'+row,c.pbatch,`B${row-1}*$B$3`,M2);row++;
+    cellSet(ws,'A'+row,'Your pay per hour');cellSet(ws,'B'+row,c.hourly,`IFERROR(B${row-1}/($B$5/60),0)`,M2);row++;
+    if((rec.notes||'').trim()){row++;cellSet(ws,'A'+row,'Method & notes');row++;cellSet(ws,'A'+row,rec.notes);}
+    ws['!ref']=`A1:J${row}`;ws['!cols']=[{wch:30},{wch:13},{wch:13},{wch:14},{wch:13},{wch:8},{wch:18},{wch:15},{wch:14},{wch:14}];
+    recipeSheets.push([sheetName(rec.name),ws]);
+  });
+  recipeSheets.forEach(([n,ws])=>X.utils.book_append_sheet(wb,ws,n));
+  X.utils.book_append_sheet(wb,pw,'Packaging');
+  const ad={A1:{t:'s',v:'Data used by Batch to re-import this file. Do not edit.'},A2:{t:'s',v:JSON.stringify(S)},'!ref':'A1:A2'};
+  X.utils.book_append_sheet(wb,ad,'AppData');
+  wb.Workbook={Sheets:wb.SheetNames.map(n=>({name:n,Hidden:n==='AppData'?1:0}))};
+  X.writeFile(wb,'batch-recipes.xlsx');
+  toast('Excel file downloaded');
+}
+
+$('#fileIn').addEventListener('change',async e=>{
+  const f=e.target.files[0];e.target.value='';if(!f)return;
+  try{
+    let data;
+    if(/\.json$/i.test(f.name)){data=JSON.parse(await f.text());}
+    else{
+      if(!window.XLSX){toast('Excel import needs an internet connection the first time.');return;}
+      const wb=window.XLSX.read(await f.arrayBuffer(),{type:'array'});const ws=wb.Sheets['AppData'];
+      if(!ws||!ws.A2){toast('That spreadsheet wasn\'t exported from Batch, so it can\'t be read back in.');return;}
+      data=JSON.parse(ws.A2.v);
+    }
+    let fromCookie=false;
+    if(!isNew(data)){if(isOld(data)){data=fromOld(data);fromCookie=true;}else{toast('That file doesn\'t look like Batch recipes.');return;}}
+    if(!confirm(`Load ${data.recipes.length} recipe(s) from "${f.name}"? This replaces what's here now.`))return;
+    S=data;S.active=0;S.tab='profit';OPEN=null;save();render();toast(fromCookie?'Cookie recipes brought over. Check each one\'s price and order size.':'Imported '+f.name,4500);
+  }catch(err){toast('Couldn\'t read that file.');}
+});
+
+if(!S.tab||!TABS[S.tab])S.tab='profit';
+if(S.incCosts===undefined)S.incCosts=true;
+save();
+render();
+if(BROUGHT)setTimeout(()=>toast('Your cookie recipes were brought over from the cookie app.',4500),900);
+let storeOk=true;try{localStorage.setItem('__batch_t','1');storeOk=localStorage.getItem('__batch_t')==='1';localStorage.removeItem('__batch_t');}catch(e){storeOk=false;}
+const tourSeen=()=>{try{return localStorage.getItem(TOURKEY)==='1';}catch(e){return false;}};
+if(!tourSeen())setTimeout(()=>{if(TI<0&&!tourSeen())tourStart();},BROUGHT?5600:800);
+if(/^https?:$/.test(location.protocol)){if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist();}catch(e){}}
+if(!storeOk)toast("This browser isn't saving changes. Export to Excel before closing.",9000);
+
+})();
+</script>
+</body>
+</html>
