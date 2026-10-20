@@ -783,7 +783,7 @@ function recipeHTML(){
         <label class="fld wide"><span class="caps">Ingredient</span><input data-b="${p}name" value="${val(it.name)}" placeholder="Ingredient name"></label>
         <div class="panel buy wide"><div class="panel-h">${ms('shopping_cart','xs')}What you buy</div><div class="panel-g">
           <label class="fld"><span class="caps">Price</span><span class="pre"><i>$</i>${numIn(p+'price',it.price)}</span></label>
-          <label class="fld"><span class="caps">Size</span>${numIn(p+'size',it.size)}</label>
+          <label class="fld"><span class="caps">Quantity</span>${numIn(p+'size',it.size)}</label>
           <label class="fld"><span class="caps">Unit</span><select data-b="${p}unit">${unitOpts(it.unit)}</select></label>
         </div></div>
         <div class="panel use wide"><div class="panel-h">${ms('scale','xs')}In your recipe</div><div class="panel-g">
@@ -1252,7 +1252,7 @@ function exportXlsx(){
     cellSet(ws,'A4',`Price per ${one}`);cellSet(ws,'B4',num(rec.price),null,M2);
     cellSet(ws,'A5','Minutes per batch');cellSet(ws,'B5',num(rec.minutes));
     cellSet(ws,'A6','Order quantity');cellSet(ws,'B6',c.q);
-    ['Ingredient','Package Price','Package Size','Package Unit','Cost per Unit','Unit','Recipe Measure','Uses per Batch','Cost per Batch',`Cost per ${one}`].forEach((h,i)=>cellSet(ws,X.utils.encode_cell({r:7,c:i}),h));
+    ['Ingredient','Package Price','Package Quantity','Package Unit','Cost per Unit','Unit','Recipe Measure','Uses per Batch','Cost per Batch',`Cost per ${one}`].forEach((h,i)=>cellSet(ws,X.utils.encode_cell({r:7,c:i}),h));
     let row=10;const first=row;let ri=0;
     rec.sections.forEach(s=>{cellSet(ws,'A'+row,s.name);row++;
       s.items.forEach(it=>{const x=c.rows[ri++];
